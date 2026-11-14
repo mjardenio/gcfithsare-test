@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#098084">
+    <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
+    <title>GC FitShare - Expert Application</title>
+    <link rel="stylesheet" href="/CSS/0_AppBase.css">
+    <link rel="stylesheet" href="/CSS/4_Expert_Application.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+</head>
+<body>
+<div class="main-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-section">
+                <img src="/ASSETS/LOGO ICON/GCFITSHARE.png" alt="GC FitShare" class="logo">
+                <a href="/feed"> <p>GC FitShare</p></a>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/feed" class="nav-item" data-page="home">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="nav-label">HOME</span>
+            </a>
+            <a href="/profile" class="nav-item" data-page="profile">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">PROFILE</span>
+            </a>
+            <a href="/expert-application" class="nav-item active" data-page="expert">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">EXPERT APPLICATION</span>
+            </a>
+            <a href="/guidance-counselling" class="nav-item" data-page="guidance">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span class="nav-label">GUIDANCE COUNSELLING</span>
+            </a>
+            <a href="/info-support" class="nav-item" data-page="about">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                <span class="nav-label">INFO AND SUPPORT</span>
+            </a>
+            <a href="/admin" class="nav-item admin-only-nav" data-page="admin" style="display:none;">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.2 8.7-7 10-3.8-1.3-7-5-7-10V7l7-4z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                <span class="nav-label">ADMIN DASHBOARD</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="sidebar-btn" id="adminVerifyBtn" title="Verify Admin Status">
+                <svg class="wrench-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                <span>Admin Verify</span>
+            </button>
+            <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode" role="switch" aria-checked="false">
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <span>Dark Mode</span>
+            </button>
+            <button class="sidebar-btn logout" id="logoutBtn">
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"></path><polyline points="17 16 21 12 17 8"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Log Out Account</span>
+            </button>
+            <div class="copyright">
+                © 2026 GC FitShare | All Rights Reserved.
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="top-bar">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <h1 class="page-title">Expert Application</h1>
+            <div class="top-bar-spacer"></div>
+        </div>
+
+        <div class="form-container">
+            <div id="applicationLockedState" class="application-locked hidden" aria-live="polite">
+                <div class="locked-card">
+                    <span class="locked-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg></span>
+                    <h2 id="applicationLockedTitle">Application already submitted</h2>
+                    <p id="applicationLockedMessage" class="locked-message"></p>
+                    <p id="applicationLockedMeta" class="locked-meta"></p>
+                    <a href="/feed" class="btn-primary locked-feed-btn">Back to Home Feed</a>
+                </div>
+            </div>
+
+            <div id="applicationOpenState" class="application-open">
+            <div id="expertRevokedNotice" class="expert-revoked-notice hidden" role="status">
+                <p><strong>Expert status removed.</strong> An administrator removed your wellness expert role. Your past approval is on record; you may submit a new application below if you want to be considered again.</p>
+            </div>
+            <div class="application-layout">
+                <aside class="application-info">
+                    <h2>Become a Wellness Expert</h2>
+                    <p class="form-subtitle">Share your expertise with the Gordon College community and help students build healthier habits.</p>
+                    <div class="info-points">
+                        <div class="info-item">Approval process by admins and faculty reviewers</div>
+                        <div class="info-item">Respond within 1-3 school days</div>
+                        <div class="info-item">Attach a proof file or provide a Google Drive link</div>
+                    </div>
+                    <div class="form-meta">
+                        <span>Estimated time: 2-3 minutes</span>
+                        <span>Fields marked with * are required</span>
+                    </div>
+                </aside>
+
+                <div class="application-form">
+                    <h2>Expert Application Form</h2>
+                    <p class="form-subtitle">Complete all required fields to submit your application.</p>
+
+                    <!-- Expert Application Form -->
+                    <form id="expertForm">
+                        <div class="form-group">
+                            <label for="fullName">Full Name <span class="required">*</span></label>
+                            <input type="text" id="fullName" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="age">Age <span class="required">*</span></label>
+                                <input type="number" id="age" min="18" max="100" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="course">Course / Program <span class="required">*</span></label>
+                                <input type="text" id="course" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="whyApply">Why do you want to become an Expert? <span class="required">*</span></label>
+                            <textarea id="whyApply" rows="4" placeholder="Share your motivation and what you can contribute..." required></textarea>
+                            <small class="input-helper">Minimum 30 characters</small>
+                            <small id="whyApplyCount" class="char-counter">0 characters</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="credentials">Credentials / Expertise <span class="required">*</span></label>
+                            <textarea id="credentials" rows="3" placeholder="e.g., BS Nutrition, Certified Fitness Trainer, 3+ years experience..." required></textarea>
+                            <small class="input-helper">Include certifications, experience, or relevant background</small>
+                            <small id="credentialsCount" class="char-counter">0 characters</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Certification / Proof (Optional)</label>
+                            <div class="upload-area" id="uploadArea">
+                                <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h8l5 5v13H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5M8 14h8M8 18h8"/></svg></span>
+                                <p>Attach Certification (PDF, JPG, PNG)</p>
+                                <small class="input-helper">Maximum file size: 5MB</small>
+                                <input type="file" id="certFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none;">
+                                <button type="button" class="btn-upload" id="uploadBtn">Choose File</button>
+                            </div>
+                            <small id="fileName" class="file-name"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gdriveLink">Or Google Drive Link</label>
+                            <input type="url" id="gdriveLink" placeholder="https://drive.google.com/...">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                            <button type="submit" class="btn-primary" id="submitBtn">Submit Application</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script src="/JS/0_Utilities.js"></script>
+<script src="/JS/0_Alerts.js"></script>
+<script src="/JS/0_Footer.js"></script>
+<script src="/JS/4_Expert_Application.js"></script>
+</body>
+</html>

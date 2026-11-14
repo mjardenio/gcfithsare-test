@@ -1,0 +1,199 @@
+/* Admin Verification modal — shared by Main Feed & Admin Dashboard (0_Footer.js). */
+
+.admin-modal {
+    max-width: 420px;
+    width: 92%;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.admin-modal .modal-body {
+    padding: 12px 20px 24px;
+}
+
+.admin-modal .verification-status {
+    text-align: inherit;
+    padding: 8px 0 0;
+}
+
+/* Loading */
+.verify-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 28px 16px 20px;
+    text-align: center;
+    color: var(--text-secondary, #636e72);
+    font-size: 14px;
+}
+
+.verify-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(29, 209, 161, 0.2);
+    border-top-color: var(--primary-color, #1dd1a1);
+    border-radius: 50%;
+    animation: admin-verify-spin 0.75s linear infinite;
+}
+
+@keyframes admin-verify-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Results */
+.verify-result {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.verify-result--success {
+    animation: verify-fade-up 0.35s ease-out;
+}
+
+@keyframes verify-fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.verify-badge-icon {
+    width: 56px;
+    height: 56px;
+    margin: 8px auto 12px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(29, 209, 161, 0.25), rgba(9, 132, 227, 0.2));
+    border: 1px solid rgba(29, 209, 161, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(9, 132, 227, 0.15);
+}
+
+.verify-badge-icon svg {
+    width: 28px;
+    height: 28px;
+    color: var(--primary-color, #1dd1a1);
+}
+
+.verify-result-kicker {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #636e72);
+    margin: 0 0 6px;
+}
+
+.verify-result-title {
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary, #2d3436);
+    margin: 0 0 18px;
+    line-height: 1.2;
+}
+
+.verify-result.fail .verify-result-title,
+.verify-result.not-admin .verify-result-title {
+    margin-bottom: 8px;
+}
+
+/* Definition list rows — no stray bullets */
+.admin-verify-spec {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.admin-verify-spec__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(9, 132, 227, 0.06);
+    border: 1px solid rgba(9, 132, 227, 0.12);
+}
+
+body.dark-mode .admin-verify-spec__row {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-verify-spec dt {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #636e72);
+}
+
+.admin-verify-spec dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #2d3436);
+    text-align: right;
+}
+
+.admin-verify-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.admin-verify-chip--yes {
+    background: rgba(29, 209, 161, 0.2);
+    color: #00a884;
+    border: 1px solid rgba(29, 209, 161, 0.4);
+}
+
+body.dark-mode .admin-verify-chip--yes {
+    color: #55efc4;
+}
+
+.admin-verify-chip--no {
+    background: rgba(231, 76, 60, 0.12);
+    color: #c0392b;
+    border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+/* Not admin / errors */
+.verify-result.not-admin .verify-badge-icon {
+    background: rgba(243, 156, 18, 0.15);
+    border-color: rgba(243, 156, 18, 0.4);
+}
+
+.verify-result.not-admin .verify-badge-icon svg {
+    color: #f39c12;
+}
+
+.verify-error {
+    text-align: center;
+    padding: 24px 12px;
+    color: var(--text-secondary, #636e72);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.verify-hint {
+    display: block;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary, #636e72);
+    line-height: 1.45;
+    margin-top: 8px;
+    padding: 0 8px;
+}

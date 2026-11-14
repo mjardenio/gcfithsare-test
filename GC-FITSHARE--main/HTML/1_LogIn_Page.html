@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#098084">
+<title>GC FitShare</title>
+<link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/CSS/0_AppBase.css">
+<link rel="stylesheet" href="/CSS/1_LogIn_Page.css">
+</head>
+
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <header class="top-bar">
+        <div class="logo">
+            <img src="/ASSETS/LOGO ICON/GCFITSHARE.png" alt="GC FitShare logo">
+            <a href="/"><h1>GC FitShare</h1></a>
+        </div>
+        <div class="help">
+            <img src="/ASSETS/LOGO ICON/SUPPORT.png" alt="Support">
+        </div>
+    </header>
+
+    <!-- CENTER LOGOS -->
+    <div class="center-logos">
+        <img src="/ASSETS/LOGO ICON/GC.png" alt="Gordon College">
+        <img src="/ASSETS/LOGO ICON/GCFITSHARE.png" alt="GC FitShare">
+    </div>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <div class="title-section">
+            <h2>Welcome to GC FitShare!</h2>
+            <p class="tagline">
+                "Your central hub for fitness, time management,<br>
+                tips and peer collaboration."
+            </p>
+        </div>
+
+        <!-- LOGIN CARD -->
+        <div class="login-card">
+
+            <div class="input-group">
+                <label class="input-label" for="emailInput">GC Email Address</label>
+                <img src="/ASSETS/LOGO ICON/USER.png" class="input-icon" alt="">
+                <input
+                    id="emailInput"
+                    type="email"
+                    placeholder="numberID@gordoncollege.edu.ph"
+                >
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="passwordInput">Password</label>
+                <img src="/ASSETS/LOGO ICON/PASSWORD.png" class="input-icon" alt="">
+                <div class="pw-wrapper">
+                    <input
+                        id="passwordInput"
+                        type="password"
+                        placeholder="Enter your password"
+                        class="password-input"
+                    >
+                    <button class="toggle-pw" type="button" onclick="togglePassword()">
+                        <img id="toggleIcon" src="/ASSETS/LOGO ICON/VIEWPASS.png" alt="Toggle password visibility">
+                    </button>
+                </div>
+            </div>
+
+            <button id="loginBtn">
+                Log In
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <label class="remember-me">
+                <input type="checkbox" id="rememberMe">
+                <span>Remember me</span>
+            </label>
+
+            <a href="#" class="forgot">Forgot password?</a>
+
+            <div class="gc-note">
+                Only <strong>@gordoncollege.edu.ph</strong> email addresses are allowed.<br>
+                No registration needed — your GC account is your access.
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer>
+        © 2026 GC FitShare |
+        <span class="link" onclick="openModal('terms')">Terms of Service</span> |
+        <span class="link" onclick="openModal('privacy')">Privacy Policy</span>
+    </footer>
+
+</div>
+
+<!-- MODALS -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">×</span>
+        <h3 id="modalTitle"></h3>
+        <p id="modalText"></p>
+    </div>
+</div>
+
+<!-- LOADER -->
+<div id="loader" class="loader-overlay">
+    <div class="loader-box">
+        <div class="spinner"></div>
+        <p>Logging you in...</p>
+    </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification" class="notification" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Supabase Authentication Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Centralized Utilities (required by all scripts) -->
+<script src="/JS/0_Utilities.js"></script>
+<script src="/JS/0_Alerts.js"></script>
+<!-- Page Transition Animations -->
+<script src="/JS/TRANSITION.js"></script>
+<!-- Login Page Specific Scripts -->
+<script src="/JS/1_LogIn_Page.js"></script>
+</body>
+</html>

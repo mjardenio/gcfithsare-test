@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#098084">
+    <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
+    <title>GC FitShare - Guidance Counselling</title>
+    <link rel="stylesheet" href="/CSS/0_AppBase.css">
+    <link rel="stylesheet" href="/CSS/7_Guidance_Counselling.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+</head>
+<body>
+<div class="main-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-section">
+                <img src="/ASSETS/LOGO ICON/GCFITSHARE.png" alt="GC FitShare" class="logo">
+                <a href="/feed"> <p>GC FitShare</p></a>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/feed" class="nav-item" data-page="home">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="nav-label">HOME</span>
+            </a>
+            <a href="/profile" class="nav-item" data-page="profile">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">PROFILE</span>
+            </a>
+            <a href="/expert-application" class="nav-item" data-page="expert">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">EXPERT APPLICATION</span>
+            </a>
+            <a href="/guidance-counselling" class="nav-item active" data-page="guidance">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span class="nav-label">GUIDANCE COUNSELLING</span>
+            </a>
+            <a href="/info-support" class="nav-item" data-page="about">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                <span class="nav-label">INFO AND SUPPORT</span>
+            </a>
+            <a href="/admin" class="nav-item admin-only-nav" data-page="admin" style="display:none;">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.2 8.7-7 10-3.8-1.3-7-5-7-10V7l7-4z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                <span class="nav-label">ADMIN DASHBOARD</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="sidebar-btn" id="adminVerifyBtn" title="Verify Admin Status">
+                <svg class="wrench-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                <span>Admin Verify</span>
+            </button>
+            <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode" role="switch" aria-checked="false">
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <span>Dark Mode</span>
+            </button>
+            <button class="sidebar-btn logout" id="logoutBtn">
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"></path><polyline points="17 16 21 12 17 8"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Log Out Account</span>
+            </button>
+            <div class="copyright">
+                © 2026 GC FitShare | All Rights Reserved.
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="top-bar">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <h1 class="page-title">Guidance Counselling</h1>
+            <div class="top-bar-spacer"></div>
+        </div>
+
+        <!-- Guidance Counselling Content -->
+        <div class="guidance-container">
+            <!-- User View: Book Appointment -->
+            <div id="userView" class="guidance-view">
+                <div class="guidance-header">
+                    <h2>Schedule a Guidance Counselling Session</h2>
+                    <p class="guidance-subtitle">Book an appointment with our guidance counsellors. We'll send a confirmation to your Gordon College email.</p>
+                </div>
+
+                <div class="guidance-card">
+                    <div class="form-section">
+                        <h3>Select Available Date</h3>
+                        <p class="form-hint">Choose a date that works best for you. Sessions are available Monday through Friday.</p>
+
+                        <div class="date-selection">
+                            <label for="sessionDate">Preferred Date</label>
+                            <input type="date" id="sessionDate" min="" required>
+                        </div>
+
+                        <div class="time-selection">
+                            <label for="sessionTime">Preferred Time</label>
+                            <select id="sessionTime" required>
+                                <option value="">Select a time slot</option>
+                                <option value="09:00">9:00 AM - 10:00 AM</option>
+                                <option value="10:00">10:00 AM - 11:00 AM</option>
+                                <option value="11:00">11:00 AM - 12:00 PM</option>
+                                <option value="13:00">1:00 PM - 2:00 PM</option>
+                                <option value="14:00">2:00 PM - 3:00 PM</option>
+                                <option value="15:00">3:00 PM - 4:00 PM</option>
+                                <option value="16:00">4:00 PM - 5:00 PM</option>
+                            </select>
+                        </div>
+
+                        <div class="topic-selection">
+                            <label for="sessionTopic">Topic / Reason for Visit</label>
+                            <select id="sessionTopic" required>
+                                <option value="">Select a topic</option>
+                                <option value="academic">Academic Concerns</option>
+                                <option value="personal">Personal Issues</option>
+                                <option value="career">Career Guidance</option>
+                                <option value="mental_health">Mental Health Support</option>
+                                <option value="social">Social / Relationship Issues</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="notes-section">
+                            <label for="sessionNotes">Additional Notes (Optional)</label>
+                            <textarea id="sessionNotes" rows="4" placeholder="Briefly describe what you'd like to discuss..."></textarea>
+                        </div>
+
+                        <div class="confirmation-section">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emailConfirmation" required>
+                                <span>Send confirmation to my Gordon College email</span>
+                            </label>
+                        </div>
+
+                        <button type="button" class="schedule-btn" id="scheduleBtn">Schedule Session</button>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Important Information</h3>
+                        <ul class="info-list">
+                            <li>
+                                <strong>Location:</strong> Guidance Office, Room 125, Main Building
+                            </li>
+                            <li>
+                                <strong>Duration:</strong> Each session lasts approximately 30 - 60 minutes
+                            </li>
+                            <li>
+                                <strong>Confirmation:</strong> You'll receive an email confirmation at your Gordon College email address
+                            </li>
+                            <li>
+                                <strong>Cancellation:</strong> Please cancel at least 24 hours in advance if you cannot attend
+                            </li>
+                            <li>
+                                <strong>Confidentiality:</strong> All sessions are confidential
+                            </li>
+                        </ul>
+
+                        <div class="contact-section">
+                            <h4>Need to Reschedule?</h4>
+                            <p>Contact the Guidance Office directly:</p>
+                            <p class="contact-email">bautista.mechel@gordoncollege.edu.ph</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Sessions -->
+                <div class="upcoming-section">
+                    <h3>Your Upcoming Sessions</h3>
+                    <div id="upcomingSessionsList" class="sessions-list">
+                        <div class="empty-state">
+                            <p>No upcoming sessions scheduled.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unavailable Dates -->
+                <div class="unavailable-section">
+                    <h3>Unavailable Dates</h3>
+                    <p class="form-hint">The following dates are unavailable for counselling sessions:</p>
+                    <div id="unavailableDatesList" class="dates-list"></div>
+                </div>
+            </div>
+
+            <!-- Admin View: Manage Appointments -->
+            <div id="adminView" class="guidance-view" style="display: none;">
+                <div class="guidance-header">
+                    <h2>Counselling Management</h2>
+                    <p class="guidance-subtitle">Manage counselling appointments and availability</p>
+                </div>
+
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="bookings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="13" y2="16"></line></svg>
+                        <span>All Bookings</span>
+                    </button>
+                    <button class="tab-btn" data-tab="availability">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="9" y1="16" x2="10" y2="16"></line><line x1="14" y1="16" x2="15" y2="16"></line></svg>
+                        <span>Set Availability</span>
+                    </button>
+                </div>
+
+                <!-- Bookings Tab -->
+                <div id="bookingsTab" class="tab-content active">
+                    <div class="bookings-list" id="bookingsList">
+                        <div class="loading">Loading bookings...</div>
+                    </div>
+                </div>
+
+                <!-- Availability Tab -->
+                <div id="availabilityTab" class="tab-content">
+                    <div class="availability-form">
+                        <h3>Set Unavailable Dates</h3>
+                        <p class="form-hint">Select dates when counselling sessions are unavailable:</p>
+                        <div class="date-picker">
+                            <input type="date" id="unavailableDate" min="">
+                            <button class="btn-add-date" id="addUnavailableDate">Add Date</button>
+                        </div>
+                        <div class="unavailable-list" id="adminUnavailableList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="modal">
+    <div class="modal-content success-modal">
+        <div class="modal-header">
+            <h2>Session Scheduled!</h2>
+            <button class="close-modal" id="closeSuccessModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="success-icon"></div>
+            <p>Your guidance counselling session has been scheduled successfully.</p>
+            <p class="confirmation-details">A confirmation email will be sent to your Gordon College email address.</p>
+            <button class="btn-primary" id="closeSuccessBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<script src="/JS/0_Utilities.js"></script>
+<script src="/JS/0_Alerts.js"></script>
+<script src="/JS/0_Footer.js"></script>
+<script src="/JS/7_Guidance_Counselling.js"></script>
+</body>
+</html>

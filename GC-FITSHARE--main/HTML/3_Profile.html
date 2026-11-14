@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#098084">
+    <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
+    <title>GC FitShare - My Profile</title>
+    <link rel="stylesheet" href="/CSS/0_AppBase.css">
+    <link rel="stylesheet" href="/CSS/3_Profile.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+</head>
+<body>
+<div class="main-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-section">
+                <img src="/ASSETS/LOGO ICON/GCFITSHARE.png" alt="GC FitShare" class="logo">
+                <a href="/feed"> <p>GC FitShare</p></a>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/feed" class="nav-item" data-page="home">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="nav-label">HOME</span>
+            </a>
+            <a href="/profile" class="nav-item active" data-page="profile">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">PROFILE</span>
+            </a>
+            <a href="/expert-application" class="nav-item" data-page="expert">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">EXPERT APPLICATION</span>
+            </a>
+            <a href="/guidance-counselling" class="nav-item" data-page="guidance">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span class="nav-label">GUIDANCE COUNSELLING</span>
+            </a>
+            <a href="/info-support" class="nav-item" data-page="about">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                <span class="nav-label">INFO AND SUPPORT</span>
+            </a>
+            <a href="/admin" class="nav-item admin-only-nav" data-page="admin" style="display:none;">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.2 8.7-7 10-3.8-1.3-7-5-7-10V7l7-4z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                <span class="nav-label">ADMIN DASHBOARD</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="sidebar-btn" id="adminVerifyBtn" title="Verify Admin Status">
+                <svg class="wrench-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                <span>Admin Verify</span>
+            </button>
+            <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode" role="switch" aria-checked="false">
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <span>Dark Mode</span>
+            </button>
+            <button class="sidebar-btn logout" id="logoutBtn">
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"></path><polyline points="17 16 21 12 17 8"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Log Out Account</span>
+            </button>
+            <div class="copyright">
+                © 2026 GC FitShare | All Rights Reserved.
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="top-bar">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <h1 class="page-title">Profile</h1>
+            <div class="top-bar-spacer"></div>
+        </div>
+
+        <!-- Cover Photo Section -->
+        <div class="profile-cover">
+            <div class="cover-image" id="coverImage" style="background: linear-gradient(135deg, #1dd1a1 0%, #0984e3 100%);"></div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="profile-section">
+            <!-- Profile Picture and Header -->
+            <div class="profile-header">
+                <div class="profile-picture-container">
+                    <div class="profile-picture-stack">
+                        <div id="profilePictureInitials" class="profile-picture-initials-fallback" aria-hidden="true">GC</div>
+                        <img id="profilePicture" class="profile-picture profile-picture-photo hidden" alt="Profile photo" width="150" height="150">
+                    </div>
+                    <label class="edit-picture-btn" title="Change Profile Picture">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                    </label>
+                </div>
+
+                <div class="profile-info">
+                    <div class="profile-name-row">
+                        <h1 id="displayName" class="profile-name">Loading...</h1>
+                        <span id="profileExpertBadgeSlot" class="profile-expert-badge-slot" hidden></span>
+                        <span id="profileAdminBadgeSlot" class="profile-admin-badge-slot" hidden></span>
+                    </div>
+                    <p id="profileExpertRoleLabel" class="profile-expert-role-label" hidden aria-label="Expert role"></p>
+                    <p id="userCourse" class="profile-course">Course</p>
+                    <p id="userBio" class="profile-bio">Bio</p>
+                    <div id="profileDetails" class="profile-details" aria-label="Profile details"></div>
+                    <div id="wellnessSummary" class="wellness-summary" aria-label="Wellness preferences"></div>
+                </div>
+
+                <div class="profile-actions">
+                    <button type="button" class="follow-btn" id="followToggleBtn" style="display:none;">Follow</button>
+                    <button type="button" class="btn-secondary report-user-btn" id="reportUserBtn" style="display:none;">Report user</button>
+                    <button type="button" class="btn-secondary lifestyle-setup-btn" id="lifestyleSetupBtn" style="display:none;">Lifestyle &amp; For You</button>
+                    <button class="edit-profile-btn" id="editProfileBtn" style="display:none;">Edit Profile</button>
+                </div>
+            </div>
+
+            <!-- Edit Profile Modal -->
+            <div id="editProfileModal" class="modal">
+                <div class="modal-content profile-modal">
+                    <div class="modal-header">
+                        <h2>Edit Profile</h2>
+                        <button class="close-modal" id="closeEditProfileModal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editUsername">Username</label>
+                            <input type="text" id="editUsername" placeholder="Enter your username" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editBio">Bio</label>
+                            <textarea id="editBio" placeholder="Tell us about yourself..." maxlength="250" rows="4"></textarea>
+                            <small id="bioCharCount">0/250</small>
+                            <div class="visibility-row">
+                                <span class="visibility-label">Who can see this?</span>
+                                <select id="visBio" class="visibility-select" aria-label="Bio visibility">
+                                    <option value="public">Public</option>
+                                    <option value="private">Private (only you)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editFullName">Full Name</label>
+                            <input type="text" id="editFullName" placeholder="Your full name" maxlength="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editCourse">Course / Program</label>
+                            <input type="text" id="editCourse" placeholder="e.g., Computer Science, Business, etc." maxlength="100">
+                            <div class="visibility-row">
+                                <span class="visibility-label">Who can see this?</span>
+                                <select id="visCourse" class="visibility-select" aria-label="Course visibility">
+                                    <option value="public">Public</option>
+                                    <option value="private">Private (only you)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editEmail">GC Email (display)</label>
+                            <input type="email" id="editEmail" placeholder="your.id@gordoncollege.edu.ph" readonly class="input-readonly">
+                            <div class="visibility-row">
+                                <span class="visibility-label">Who can see this?</span>
+                                <select id="visEmail" class="visibility-select" aria-label="Email visibility">
+                                    <option value="private" selected>Private (only you)</option>
+                                    <option value="public">Public</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editAge">Age</label>
+                                <input type="number" id="editAge" placeholder="Your age" min="13" max="120">
+                                <div class="visibility-row">
+                                    <span class="visibility-label">Visibility</span>
+                                    <select id="visAge" class="visibility-select" aria-label="Age visibility">
+                                        <option value="private" selected>Private</option>
+                                        <option value="public">Public</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editBirthday">Birthday</label>
+                                <input type="date" id="editBirthday">
+                                <div class="visibility-row">
+                                    <span class="visibility-label">Visibility</span>
+                                    <select id="visBirthday" class="visibility-select" aria-label="Birthday visibility">
+                                        <option value="private" selected>Private</option>
+                                        <option value="public">Public</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editHeight">Height (cm)</label>
+                                <input type="number" id="editHeight" placeholder="Height in cm" min="50" max="300">
+                                <div class="visibility-row">
+                                    <span class="visibility-label">Visibility</span>
+                                    <select id="visHeight" class="visibility-select" aria-label="Height visibility">
+                                        <option value="private" selected>Private</option>
+                                        <option value="public">Public</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editWeight">Weight (kg)</label>
+                                <input type="number" id="editWeight" placeholder="Weight in kg" min="20" max="300" step="0.1">
+                                <div class="visibility-row">
+                                    <span class="visibility-label">Visibility</span>
+                                    <select id="visWeight" class="visibility-select" aria-label="Weight visibility">
+                                        <option value="private" selected>Private</option>
+                                        <option value="public">Public</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group wellness-edit-group">
+                            <label>Wellness Content Categories</label>
+                            <div class="checkbox-grid compact-grid" id="profileContentInterestsGrid">
+                                <label class="checkbox-card"><input type="checkbox" name="profile_content_interests" value="nutrition"><span> Nutrition</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_content_interests" value="fitness"><span> Fitness</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_content_interests" value="mental_wellness"><span> Mental Wellness</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_content_interests" value="productivity"><span> Productivity</span></label>
+                            </div>
+                        </div>
+
+                        <div class="form-group wellness-edit-group">
+                            <label>Wellness Goals</label>
+                            <div class="checkbox-grid compact-grid" id="profileGoalsGrid">
+                                <label class="checkbox-card"><input type="checkbox" name="profile_fitness_goals" value="weight_loss"><span> Weight Loss</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_fitness_goals" value="muscle_gain"><span> Muscle Gain</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_fitness_goals" value="stress_management"><span> Stress Management</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_fitness_goals" value="better_sleep"><span> Better Sleep</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_fitness_goals" value="endurance"><span> Endurance</span></label>
+                                <label class="checkbox-card"><input type="checkbox" name="profile_fitness_goals" value="flexibility"><span> Flexibility</span></label>
+                            </div>
+                        </div>
+
+                        <div class="form-group wellness-edit-group">
+                            <label for="editWellnessBio">Wellness Bio (optional)</label>
+                            <textarea id="editWellnessBio" rows="3" maxlength="500" placeholder="Share your wellness focus..."></textarea>
+                        </div>
+
+                        <div class="form-group wellness-edit-group lifestyle-setup-section" id="lifestyleSetupSection">
+                            <label class="section-label-profile">Lifestyle quiz — powers your <strong>For You</strong> feed</label>
+                            <div class="form-group">
+                                <label for="profilePersonalityMotivation">What motivates you most?</label>
+                                <select id="profilePersonalityMotivation">
+                                    <option value="">Choose one</option>
+                                    <option value="accountability">Accountability, buddies, or classes</option>
+                                    <option value="self_driven">Quiet routine and self-discipline</option>
+                                    <option value="competition">Challenges, PRs, or measurable wins</option>
+                                    <option value="curiosity">Learning why things work and trying new ideas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePersonalityTraining">How do you like to move or train?</label>
+                                <select id="profilePersonalityTraining">
+                                    <option value="">Choose one</option>
+                                    <option value="structured_plans">Structured plans (sets, splits, schedules)</option>
+                                    <option value="flexible_intuitive">Flexible and intuitive day to day</option>
+                                    <option value="short_blitz">Short, intense bursts when I can</option>
+                                    <option value="slow_steady">Slow, steady, and sustainable</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePersonalitySocial">Social energy around wellness</label>
+                                <select id="profilePersonalitySocial">
+                                    <option value="">Choose one</option>
+                                    <option value="solo_focus">Mostly solo focus</option>
+                                    <option value="small_circle">Small circle (friend or partner)</option>
+                                    <option value="community_energy">Groups, classes, or campus energy</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePersonalityLearning">When building habits, you prefer</label>
+                                <select id="profilePersonalityLearning">
+                                    <option value="">Choose one</option>
+                                    <option value="step_by_step">Step-by-step guides</option>
+                                    <option value="big_picture">Big-picture framing first</option>
+                                    <option value="stories_examples">Stories and real examples</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileExperienceStory">Personal experience for your feed (optional, private)</label>
+                                <textarea id="profileExperienceStory" rows="4" maxlength="1200" placeholder="Share context for better matches—not shown on your public profile."></textarea>
+                                <small class="form-hint-private">Used only for <strong>For You</strong> ranking.</small>
+                            </div>
+                        </div>
+
+                        <p class="privacy-notice">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            Choose Public to show a field on your profile to others. Private keeps it visible only to you.
+                        </p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn-cancel" id="cancelEditProfile">Cancel</button>
+                        <button class="btn-save" id="saveProfileBtn">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Section - Centered with Total Likes -->
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="postCount">0</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="likesCount">0</span>
+                    <span class="stat-label">Likes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="bookmarkCount">0</span>
+                    <span class="stat-label">Bookmarks</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="followersCount">0</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="followingCount">0</span>
+                    <span class="stat-label">Following</span>
+                </div>
+            </div>
+
+            <!-- Tabs Section -->
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="my-posts">My Posts</button>
+                <button class="tab-btn" data-tab="bookmarks">Bookmarked Posts</button>
+                <button class="tab-btn" data-tab="followers-list">Followers</button>
+                <button class="tab-btn" data-tab="following-list">Following</button>
+            </div>
+
+            <!-- My Posts Section -->
+            <div id="my-posts" class="tab-content active">
+                <div id="myPostsContainer" class="posts-container">
+                    <div class="loading-state">
+                        <svg class="spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+                        <p>Loading your posts...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookmarked Posts Section -->
+            <div id="bookmarks" class="tab-content">
+                <div id="bookmarkedPostsContainer" class="posts-container">
+                    <div class="loading-state">
+                        <svg class="spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+                        <p>Loading your bookmarks...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Followers List Section -->
+            <div id="followers-list" class="tab-content">
+                <div id="followersListContainer" class="following-list-container">
+                    <div class="loading-state">
+                        <svg class="spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+                        <p>Loading your followers...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Following List Section -->
+            <div id="following-list" class="tab-content">
+                <div id="followingListContainer" class="following-list-container">
+                    <div class="loading-state">
+                        <svg class="spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+                        <p>Loading users you follow...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Full Post Modal -->
+    <div id="fullPostModal" class="modal">
+        <div class="modal-content full-post-modal">
+            <div class="modal-header">
+                <h2>Full Post</h2>
+                <button class="close-modal" id="closeFullPostModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3 id="fullPostTitle" class="full-post-title"></h3>
+                <p id="fullPostBody" class="full-post-body"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportUserModal" class="modal">
+        <div class="modal-content report-user-modal">
+            <div class="modal-header">
+                <h2>Report user</h2>
+                <button type="button" class="close-modal" id="closeReportUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtitle" style="margin-bottom:12px;">Tell us what is going on. Admins will review; abuse of reports may affect your account.</p>
+                <label for="reportUserReason">Reason</label>
+                <select id="reportUserReason" class="report-user-select">
+                    <option value="">Select a reason</option>
+                    <option value="harassment">Harassment or bullying</option>
+                    <option value="spam">Spam or scams</option>
+                    <option value="impersonation">Impersonation</option>
+                    <option value="inappropriate">Inappropriate behavior</option>
+                    <option value="other">Other</option>
+                </select>
+                <label for="reportUserDetails" style="margin-top:12px;display:block;">Details (optional)</label>
+                <textarea id="reportUserDetails" maxlength="500" rows="4" placeholder="What happened?"></textarea>
+                <div class="modal-actions" style="margin-top:16px;">
+                    <button type="button" class="btn-danger" id="submitReportUserBtn">Submit report</button>
+                    <button type="button" class="btn-secondary" id="cancelReportUserBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/JS/0_Utilities.js"></script>
+<script src="/JS/0_AI_Moderation.js"></script>
+<script src="/JS/0_Alerts.js"></script>
+<script src="/JS/0_Footer.js"></script>
+<script src="/JS/3_Profile.js"></script>
+</body>
+</html>

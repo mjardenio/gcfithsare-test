@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#098084">
+    <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
+    <title>GC FitShare - Main Feed</title>
+    <link rel="stylesheet" href="/CSS/0_AppBase.css">
+    <link rel="stylesheet" href="/CSS/2_Main_Feed.css">
+    <link rel="stylesheet" href="/CSS/0_AdminVerifyModal.css">
+</head>
+<body>
+<div class="main-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-section">
+                <img src="/ASSETS/LOGO ICON/GCFITSHARE.png" alt="GC FitShare" class="logo">
+                <a href="/feed"> <p>GC FitShare</p></a>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/feed" class="nav-item active" data-page="home">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="nav-label">HOME</span>
+            </a>
+            <a href="/profile" class="nav-item" data-page="profile">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">PROFILE</span>
+            </a>
+            <a href="/expert-application" class="nav-item" data-page="expert">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="nav-label">EXPERT APPLICATION</span>
+            </a>
+            <a href="/guidance-counselling" class="nav-item" data-page="guidance">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span class="nav-label">GUIDANCE COUNSELLING</span>
+            </a>
+            <a href="/info-support" class="nav-item" data-page="about">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                <span class="nav-label">INFO AND SUPPORT</span>
+            </a>
+            <a href="/admin" class="nav-item admin-only-nav" data-page="admin" style="display:none;">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.2 8.7-7 10-3.8-1.3-7-5-7-10V7l7-4z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                <span class="nav-label">ADMIN DASHBOARD</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="sidebar-btn" id="adminVerifyBtn" title="Verify Admin Status">
+                <svg class="wrench-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                <span>Admin Verify</span>
+            </button>
+            <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode" role="switch" aria-checked="false">
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <span>Dark Mode</span>
+            </button>
+            <button class="sidebar-btn logout" id="logoutBtn">
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"></path><polyline points="17 16 21 12 17 8"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Log Out Account</span>
+            </button>
+            <div class="copyright">
+                © 2026 GC FitShare | All Rights Reserved.
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <h1 class="page-title">Home</h1>
+            <div class="top-bar-spacer"></div>
+        </div>
+
+        <!-- Feed Container -->
+        <div class="feed-container">
+            <!-- Feed Toolbar: search + quick actions -->
+            <div class="feed-toolbar">
+                <div class="feed-toolbar-center">
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Search anything...">
+                        <button class="search-btn header-tooltip" title="Search" data-tooltip="Search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                        </button>
+                    </div>
+                    <button class="create-post-btn header-tooltip" id="createPostBtn" data-tooltip="Create Post">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 5px; display: inline;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        Create Post
+                    </button>
+                </div>
+                <div class="feed-actions">
+                    <button class="notification-btn header-tooltip" title="Notifications" data-tooltip="Notifications">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="expertApplicationPendingBanner" class="expert-pending-banner hidden" role="status">
+                <p class="expert-pending-text">Your expert application is <strong>pending review</strong>. We'll notify you when there is an update. Thanks for your patience.</p>
+                <button type="button" class="expert-pending-dismiss" id="expertPendingBannerDismiss" aria-label="Dismiss">×</button>
+            </div>
+
+            <!-- Filter Container with white background -->
+            <div class="filter-container">
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="hot">Hot</button>
+                        <button class="filter-tab" data-filter="new">New</button>
+                        <button class="filter-tab" data-filter="top">Top</button>
+                        <button class="filter-tab" data-filter="controversial">Controversial</button>
+                        <button class="filter-tab" data-filter="recommended" title="Ranked from your lifestyle setup and optional story">For You</button>
+                    </div>
+                    <div class="category-filters">
+                        <button class="category-btn active" data-category="all">All</button>
+                        <button class="category-btn" data-category="nutrition"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 2v20M4.22 4.22l14.14 14.14M19.78 4.22l-14.14 14.14"></path></svg> Nutrition</button>
+                        <button class="category-btn" data-category="fitness"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v2H6z"></path><path d="M8 7v8M12 7v8M16 7v8"></path><path d="M8 16h8v2H8z"></path></svg> Fitness</button>
+                        <button class="category-btn" data-category="mental_wellness"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path d="M12 9v6M9 12h6"></path></svg> Mental Wellness</button>
+                        <button class="category-btn" data-category="productivity"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M9 7h6M9 11h6M9 15h3"></path></svg> Productivity</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Feed + Sidebar Layout -->
+            <div class="feed-layout">
+                <!-- Posts Feed -->
+                <div id="postsContainer" class="posts-grid">
+                    <!-- Posts will be loaded here -->
+                    <div class="loading-skeleton">
+                        <div class="skeleton-header"></div>
+                        <div class="skeleton-body"></div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar - Most Engaged Posts -->
+                <aside class="trending-header">
+                    <div class="sidebar-header">
+                        <h3>
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right: 8px; display: inline-block;">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
+                            </svg>
+                            Trending & Engaged
+                        </h3>
+                    </div>
+                    <div id="trendingPosts" class="trending-posts">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Admin Verification Modal -->
+<div id="adminVerificationModal" class="modal hidden">
+    <div class="modal-content admin-modal">
+        <div class="modal-header">
+            <h2>Admin Verification</h2>
+            <button class="modal-close" id="closeAdminModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="adminVerificationStatus" class="verification-status">
+                <p>Checking your admin status...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div id="createPostModal" class="modal hidden">
+    <div class="modal-content create-post-modal">
+        <div class="modal-header">
+            <h2>Create New Post</h2>
+            <button class="modal-close" id="closePostModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="post-form">
+                <div class="form-group">
+                    <label for="postTitle">Post Title *</label>
+                    <input type="text" id="postTitle" placeholder="What's your fitness achievement or question?" maxlength="300" required>
+                    <small id="titleCount">0/300</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="postContent">Description</label>
+                    <div class="editor-toolbar" aria-label="Post formatting toolbar">
+                        <button type="button" class="editor-tool" data-format="bold" title="Bold"><strong>B</strong></button>
+                        <button type="button" class="editor-tool" data-format="italic" title="Italic"><em>I</em></button>
+                        <button type="button" class="editor-tool" data-format="underline" title="Underline"><u>U</u></button>
+                        <label class="editor-color-wrap" title="Text color">
+                            <span class="editor-color-label">A</span>
+                            <input type="color" id="postTextColor" class="editor-color-input" value="#1dd1a1">
+                        </label>
+                        <button type="button" class="editor-tool" data-format="bullet" title="Bullet List">• List</button>
+                        <button type="button" class="editor-tool" data-format="number" title="Numbered List">1. List</button>
+                    </div>
+                    <textarea id="postContent" placeholder="Share more details about your post..." maxlength="5000"></textarea>
+                    <small id="contentCount">0/5000</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="postCategory">Category <span class="required">*</span></label>
+                    <select id="postCategory" required>
+                        <option value="">Select a category</option>
+                        <option value="nutrition">Nutrition</option>
+                        <option value="fitness">Fitness</option>
+                        <option value="mental_wellness">Mental Wellness</option>
+                        <option value="productivity">Productivity</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="postHashtags">Hashtags <span class="required">*</span></label>
+                    <input type="text" id="postHashtags" placeholder="e.g., #fitness #diet #workout (at least 1 required)" required>
+                    <small>Separate hashtags with spaces. At least 1 required.</small>
+                    <div id="hashtagList" class="hashtag-list"></div>
+                    <small id="hashtagError" style="color: #e74c3c; display: none;"></small>
+                </div>
+
+                <div class="image-upload-section">
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImg" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+                        <button type="button" class="btn-remove-image" id="removeImageBtn">Remove Image</button>
+                    </div>
+
+                    <label for="postImage" class="image-upload-label">
+                        <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+                        <span class="upload-text">
+                            <strong>Add Image</strong>
+                            <small>JPG, PNG, WebP up to 4MB</small>
+                        </span>
+                    </label>
+                    <input type="file" id="postImage" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                    <small id="imageSizeError" style="color: red; display: none;"></small>
+                </div>
+
+                <div class="post-actions">
+                    <button id="submitPostBtn" class="btn-primary">Post</button>
+                    <button id="cancelPostBtn" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Post Modal -->
+<div id="reportPostModal" class="modal hidden">
+    <div class="modal-content report-modal">
+        <div class="modal-header">
+            <h2>Report Post</h2>
+            <button class="modal-close" id="closeReportModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label for="reportReason">Reason for reporting:</label>
+            <select id="reportReason">
+                <option value="">Select a reason</option>
+                <option value="inappropriate">Inappropriate Content</option>
+                <option value="spam">Spam</option>
+                <option value="harassment">Harassment</option>
+                <option value="false-info">False Information</option>
+                <option value="other">Other</option>
+            </select>
+            <textarea id="reportDetails" placeholder="Provide additional details..." maxlength="500"></textarea>
+            <div class="modal-actions">
+                <button id="submitReportBtn" class="btn-danger">Submit Report</button>
+                <button id="cancelReportBtn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Full Post Modal -->
+<div id="fullPostModal" class="modal hidden">
+    <div class="modal-content full-post-modal">
+        <div class="modal-header">
+            <h2>Post</h2>
+            <button class="modal-close" id="closeFullPostModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="fullPostContent">
+                <!-- Post content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wellness Profile Modal (MVP Feature 1.1) -->
+<div id="wellnessProfileModal" class="modal hidden">
+    <div class="modal-content wellness-modal">
+        <div class="modal-header">
+            <h2>Set up GC FitShare with your lifestyle</h2>
+            <button class="modal-close" id="closeWellnessModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-subtitle">A quick wellness check-in plus a short lifestyle quiz powers your <strong>For You</strong> feed. Optional story text is only used for matching posts—not shown on your profile.</p>
+            
+            <div class="form-group">
+                <label>Fitness Goals (select all that apply)</label>
+                <div class="checkbox-grid" id="fitnessGoalsGrid">
+                    <label class="checkbox-card"><input type="checkbox" name="fitness_goals" value="weight_loss"><span> Weight Loss</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="fitness_goals" value="muscle_gain"><span> Muscle Gain</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="fitness_goals" value="stress_management"><span> Stress Management</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="fitness_goals" value="better_sleep"><span> Better Sleep</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="fitness_goals" value="endurance"><span> Endurance</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="fitness_goals" value="flexibility"><span> Flexibility</span></label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="activityLevel">Activity Level</label>
+                <select id="activityLevel">
+                    <option value="">Select your activity level</option>
+                    <option value="sedentary"> Sedentary (Little or no exercise)</option>
+                    <option value="lightly_active"> Lightly Active (1-3 days/week)</option>
+                    <option value="moderately_active"> Moderately Active (3-5 days/week)</option>
+                    <option value="very_active"> Very Active (6-7 days/week)</option>
+                    <option value="athlete"> Athlete (Intense training)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Health Preferences</label>
+                <div class="checkbox-grid" id="healthPrefsGrid">
+                    <label class="checkbox-card"><input type="checkbox" name="health_prefs" value="vegan"><span> Vegan</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="health_prefs" value="vegetarian"><span> Vegetarian</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="health_prefs" value="gluten_free"><span> Gluten Free</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="health_prefs" value="low_carb"><span> Low Carb</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="health_prefs" value="high_protein"><span> High Protein</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="health_prefs" value="no_preference"><span> No Preference</span></label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Content Interests</label>
+                <div class="checkbox-grid" id="contentInterestsGrid">
+                    <label class="checkbox-card"><input type="checkbox" name="content_interests" value="nutrition"><span> Nutrition</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="content_interests" value="fitness"><span> Fitness</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="content_interests" value="mental_wellness"><span> Mental Wellness</span></label>
+                    <label class="checkbox-card"><input type="checkbox" name="content_interests" value="productivity"><span> Productivity</span></label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="wellnessBio">Public wellness bio (optional)</label>
+                <textarea id="wellnessBio" placeholder="Short line others may see on your profile..." maxlength="500" rows="2"></textarea>
+            </div>
+
+            <div class="lifestyle-quiz-section">
+                <h3 class="lifestyle-quiz-heading">Lifestyle &amp; personality (For You ranking)</h3>
+                <p class="lifestyle-quiz-hint">Pick what fits you most of the time—there are no wrong answers.</p>
+
+                <div class="form-group">
+                    <label for="personalityMotivation">What motivates you most?</label>
+                    <select id="personalityMotivation">
+                        <option value="">Choose one</option>
+                        <option value="accountability">Accountability, buddies, or classes</option>
+                        <option value="self_driven">Quiet routine and self-discipline</option>
+                        <option value="competition">Challenges, PRs, or measurable wins</option>
+                        <option value="curiosity">Learning why things work and trying new ideas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="personalityTraining">How do you like to move or train?</label>
+                    <select id="personalityTraining">
+                        <option value="">Choose one</option>
+                        <option value="structured_plans">Structured plans (sets, splits, schedules)</option>
+                        <option value="flexible_intuitive">Flexible and intuitive day to day</option>
+                        <option value="short_blitz">Short, intense bursts when I can</option>
+                        <option value="slow_steady">Slow, steady, and sustainable</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="personalitySocial">Social energy around wellness</label>
+                    <select id="personalitySocial">
+                        <option value="">Choose one</option>
+                        <option value="solo_focus">Mostly solo focus</option>
+                        <option value="small_circle">Small circle (friend or partner)</option>
+                        <option value="community_energy">Groups, classes, or campus energy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="personalityLearning">When building habits, you prefer</label>
+                    <select id="personalityLearning">
+                        <option value="">Choose one</option>
+                        <option value="step_by_step">Step-by-step guides</option>
+                        <option value="big_picture">Big-picture framing first</option>
+                        <option value="stories_examples">Stories and real examples</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="wellnessExperienceStory">Personal experience for your feed (optional, private)</label>
+                <textarea id="wellnessExperienceStory" placeholder="e.g., juggling night classes and gym, recovering from an injury, stress during exams—loosely matched to post text, not shown on profile." maxlength="1200" rows="4"></textarea>
+                <small class="form-hint-private">Used only to personalize <strong>For You</strong>. Not displayed publicly.</small>
+            </div>
+
+            <div class="modal-actions">
+                <button id="skipWellnessProfile" class="btn-secondary">Skip for Now</button>
+                <button id="saveWellnessProfile" class="btn-primary">Save Profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bookmarks Modal -->
+<div id="bookmarksModal" class="modal hidden">
+    <div class="modal-content bookmarks-modal">
+        <div class="modal-header">
+            <h2>My Bookmarks</h2>
+            <button class="modal-close" id="closeBookmarksModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="bookmarksList" class="bookmarks-list">
+                <!-- Bookmarks will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<!-- Centralized Utilities (required by all scripts) -->
+<script src="/JS/0_AI_Config.js"></script>
+<script src="/JS/0_AI_Moderation.js"></script>
+<script src="/JS/0_Alerts.js"></script>
+<script src="/JS/0_Utilities.js"></script>
+<script src="/JS/0_Footer.js"></script>
+<script src="/JS/2_Main_Feed.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+/*
+ * 0_AppBase.css — GLOBAL BASELINE (load first on every HTML page)
+ * Text size tuning, horizontal clip, responsive media, reduced motion.
+ * Page layout and components live in 1_…6_*.css files.
+ */
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
+}
+
+img,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Shared Mobile Sidebar Backdrop Overlay (Reddit / Mobile Drawer Style) */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 6998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+}
+
+/* Shared navigation drawer: the drawer must remain above its backdrop. */
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed !important;
+        inset: 0 auto 0 0;
+        width: min(280px, 85vw) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 7000 !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        background: linear-gradient(135deg, #098084 0%, #00b894 100%);
+        box-shadow: 4px 0 24px rgba(0,0,0,.25);
+    }
+    .sidebar.hidden {
+        position: fixed !important;
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+    .sidebar-overlay { z-index: 6998; }
+    .sidebar-overlay.active { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .sidebar .nav-menu { display: block !important; }
+    .sidebar .nav-item { flex: initial !important; white-space: normal; }
+}
+
+/* Responsive baseline for the static multi-page application. */
+body { min-width: 320px; }
+.main-container { min-height: 100vh; min-height: 100dvh; height: auto; }
+.main-content { min-width: 0; }
+img, video, iframe, input, select, textarea, button { max-width: 100%; }
+@media (min-width: 1025px) {
+    .sidebar-toggle { display: none !important; }
+    .user-profile-link { display: none !important; }
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Dark mode control presented as an accessible switch while retaining its button action. */
+#darkModeToggle { gap: 10px; }
+#darkModeToggle > span { margin-right: auto; }
+#darkModeToggle::after {
+  content: "";
+  width: 36px;
+  height: 20px;
+  flex: 0 0 36px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 10px 10px, #fff 0 6px, transparent 6.5px), rgba(0,0,0,.28);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+  transition: background .2s ease;
+}
+#darkModeToggle[aria-checked="true"]::after {
+  background: radial-gradient(circle at 26px 10px, #fff 0 6px, transparent 6.5px), #05695f;
+}
+#darkModeToggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

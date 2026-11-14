@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/HTML/0_LandingPage.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/HTML/1_LogIn_Page.html"
+    },
+    {
+      "source": "/feed",
+      "destination": "/HTML/2_Main_Feed.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/HTML/3_Profile.html"
+    },
+    {
+      "source": "/expert-application",
+      "destination": "/HTML/4_Expert_Application.html"
+    },
+    {
+      "source": "/info-support",
+      "destination": "/HTML/5_Info_Support.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/HTML/6_Admin_Dashboard.html"
+    },
+    {
+      "source": "/guidance-counselling",
+      "destination": "/HTML/7_Guidance_Counselling.html"
+    }
+  ]
+}

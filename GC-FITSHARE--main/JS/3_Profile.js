@@ -654,14 +654,8 @@ function displayUserProfile() {
 
     const expertRoleEl = document.getElementById('profileExpertRoleLabel');
     if (expertRoleEl) {
-        if (userProfile.is_expert) {
-            const customTitle = String(userProfile.expert_title || '').trim();
-            expertRoleEl.textContent = customTitle || 'Wellness Expert';
-            expertRoleEl.hidden = false;
-        } else {
-            expertRoleEl.textContent = '';
-            expertRoleEl.hidden = true;
-        }
+        expertRoleEl.textContent = userProfile.is_expert ? 'Verified Expert' : 'Student';
+        expertRoleEl.hidden = false;
     }
 
     const courseEl = document.getElementById('userCourse');
@@ -1637,7 +1631,25 @@ async function handleProfilePictureUpload(e) {
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
-function openEditProfileModal() {
+function ensureLifestyleModal() {
+    if (document.getElementById('lifestyleProfileModal')) return;
+    const editModal = document.getElementById('editProfileModal');
+    const body = editModal?.querySelector('.modal-body');
+    if (!body) return;
+    const modal = document.createElement('div');
+    modal.id = 'lifestyleProfileModal';
+    modal.className = 'modal';
+    modal.innerHTML = `<div class="modal-content profile-modal lifestyle-profile-modal">
+      <div class="modal-header"><h2>Lifestyle &amp; For You</h2><button type="button" class="close-modal" id="closeLifestyleProfileModal" aria-label="Close">&times;</button></div>
+      <div class="modal-body lifestyle-profile-body"></div>
+      <div class="modal-footer"><button type="button" class="btn-cancel" id="cancelLifestyleProfile">Cancel</button><button type="button" class="btn-save" id="saveLifestyleProfile">Save Preferences</button></div>
+    </div>`;
+    const lifestyleBody = modal.querySelector('.lifestyle-profile-body');
+    body.querySelectorAll('.wellness-edit-group, .privacy-notice').forEach((section) => lifestyleBody.appendChild(section));
+    document.body.appendChild(modal);
+}
+
+function openEditProfileModal(mode = 'edit') {
     document.getElementById('editUsername').value = userProfile.username  || '';
     document.getElementById('editBio').value      = userProfile.bio       || '';
     document.getElementById('editCourse').value   = userProfile.course    || '';
@@ -1684,11 +1696,24 @@ function openEditProfileModal() {
     const expEl = document.getElementById('profileExperienceStory');
     if (expEl) expEl.value = userWellnessProfile?.experience_story || '';
     updateBioCharCount();
-    document.getElementById('editProfileModal').classList.add('active');
+    const target = mode === 'lifestyle' ? document.getElementById('lifestyleProfileModal') : document.getElementById('editProfileModal');
+    target?.classList.add('active');
 }
 
 function closeEditProfileModal() {
     document.getElementById('editProfileModal').classList.remove('active');
+    document.getElementById('lifestyleProfileModal')?.classList.remove('active');
+}
+
+async function saveLifestylePreferences() {
+    const interests = Array.from(document.querySelectorAll('input[name="profile_content_interests"]:checked')).map((el) => el.value);
+    const goals = Array.from(document.querySelectorAll('input[name="profile_fitness_goals"]:checked')).map((el) => el.value);
+    const bio = document.getElementById('editWellnessBio')?.value?.trim() || null;
+    await saveWellnessProfile(interests, goals, bio);
+    await loadWellnessProfile();
+    closeEditProfileModal();
+    displayUserProfile();
+    showAppAlert('Success', 'Lifestyle preferences updated.', 'success');
 }
 
 function updateBioCharCount() {
@@ -2026,17 +2051,16 @@ function closeFullPostModal() {
 
 // ─── Event Listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
+    ensureLifestyleModal();
     if (isOwnProfile) {
         document.getElementById('editProfileBtn')?.addEventListener('click', openEditProfileModal);
-        document.getElementById('lifestyleSetupBtn')?.addEventListener('click', () => {
-            openEditProfileModal();
-            requestAnimationFrame(() => {
-                document.getElementById('lifestyleSetupSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
+        document.getElementById('lifestyleSetupBtn')?.addEventListener('click', () => openEditProfileModal('lifestyle'));
         document.getElementById('closeEditProfileModal')?.addEventListener('click', closeEditProfileModal);
         document.getElementById('cancelEditProfile')?.addEventListener('click', closeEditProfileModal);
         document.getElementById('saveProfileBtn')?.addEventListener('click', saveProfile);
+        document.getElementById('closeLifestyleProfileModal')?.addEventListener('click', closeEditProfileModal);
+        document.getElementById('cancelLifestyleProfile')?.addEventListener('click', closeEditProfileModal);
+        document.getElementById('saveLifestyleProfile')?.addEventListener('click', saveLifestylePreferences);
         document.getElementById('profilePictureInput')?.addEventListener('change', handleProfilePictureUpload);
     }
     document.getElementById('followToggleBtn')?.addEventListener('click', handleFollowToggle);
@@ -2053,6 +2077,9 @@ function setupEventListeners() {
     document.getElementById('darkModeToggle')?.addEventListener('click', toggleDarkMode);
     document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'editProfileModal') closeEditProfileModal();
+    });
+    document.getElementById('lifestyleProfileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'lifestyleProfileModal') closeEditProfileModal();
     });
     document.getElementById('fullPostModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'fullPostModal') closeFullPostModal();

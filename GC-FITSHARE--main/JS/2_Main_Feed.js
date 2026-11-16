@@ -1760,6 +1760,12 @@ function formatMarkdown(text) {
 function openFullPostModal(postId, title, body, authorName, authorCourse, createdAt, imageUrl, category) {
     const modal = document.getElementById('fullPostModal');
     const contentEl = document.getElementById('fullPostContent');
+    const sourcePost = allPosts.find((post) => post.id === postId);
+    const authorIsExpert = !!sourcePost?.user?.is_expert || (sourcePost?.user_id === currentUser?.id && currentUserIsExpert);
+    const expertAuthorBadge = authorIsExpert && typeof getExpertUserBadgeSvg === 'function' ? getExpertUserBadgeSvg(`full-${postId}`, 20) : '';
+    const expertApprovedBadge = sourcePost && (sourcePost.expert_endorsed_at || sourcePost.is_expert_approved) && typeof getPostExpertApprovedBadgeHtml === 'function'
+        ? getPostExpertApprovedBadgeHtml(`full-${postId}`)
+        : '';
 
     if (!contentEl || !modal) return;
 
@@ -1779,7 +1785,7 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
                 </div>
                 <div class="post-meta">
                     <div class="post-author">
-                        <strong>${escapeHtml(authorName || 'Anonymous')}</strong>
+                    <strong>${escapeHtml(authorName || 'Anonymous')}</strong>${expertAuthorBadge}
                         ${authorCourse ? `<span class="post-course">• ${escapeHtml(authorCourse)}</span>` : ''}
                     </div>
                     <div class="post-date">${formatDate(createdAt)}</div>
@@ -1787,6 +1793,7 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
             </div>
             ${category ? `<span class="post-category-badge">${escapeHtml(category)}</span>` : ''}
         </div>
+        ${expertApprovedBadge}
         
         <div class="full-post-body">
             <h2 class="full-post-title">${escapeHtml(title || 'Untitled Post')}</h2>
@@ -1800,11 +1807,13 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <path d="M12 19V5M5 12l7-7 7 7"></path>
                     </svg>
+                    <span class="upvote-count">${sourcePost?.upvotes_count || 0}</span>
                 </button>
                 <button class="post-action-btn downvote-btn" data-post-id="${postId}" title="Downvote">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <path d="M12 5v14M5 12l7 7 7-7"></path>
                     </svg>
+                    <span class="downvote-count">${sourcePost?.downvotes_count || 0}</span>
                 </button>
                 <button class="post-action-btn comment-btn" data-post-id="${postId}" title="Comment">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">

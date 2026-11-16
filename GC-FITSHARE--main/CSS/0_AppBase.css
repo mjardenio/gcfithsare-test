@@ -82,6 +82,15 @@ img, video, iframe, input, select, textarea, button { max-width: 100%; }
     pointer-events: auto;
 }
 
+/* Keep the logo/nav boundary consistent on every authenticated page. */
+.sidebar .nav-menu {
+    border-top: 1px solid rgba(255, 255, 255, .24);
+    margin: 10px 15px 0;
+    padding-top: 10px;
+}
+.sidebar .nav-item { min-height: 44px; }
+.main-content .page-title { font-weight: 700; }
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

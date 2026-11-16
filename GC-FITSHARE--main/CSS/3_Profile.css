@@ -842,7 +842,12 @@ body.dark-mode .profile-expert-role-label {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 12px;
+    border-right: 1px solid var(--border-color);
 }
+.stat-item:last-child { border-right: 0; }
 
 .stat-number {
     font-size: 24px;
@@ -1919,9 +1924,9 @@ img.post-avatar.post-avatar-img {
 
     .profile-stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        padding: 14px 10px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0;
+        padding: 14px 6px;
         width: 100%;
         text-align: center;
     }
@@ -2056,9 +2061,14 @@ img.post-avatar.post-avatar-img {
     }
 
     .profile-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-        padding: 12px 8px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0;
+        padding: 12px 4px;
+    }
+
+    .stat-item {
+        padding: 6px 3px;
+        border-right: 1px solid var(--border-color);
     }
 
     .modal-footer {
@@ -2073,6 +2083,12 @@ img.post-avatar.post-avatar-img {
     }
 }
 
+@media (max-width: 480px) {
+    .profile-stats .stat-label { font-size: 9px; letter-spacing: 0; }
+    .profile-stats .stat-number { font-size: 15px; }
+    .profile-stats .stat-item { overflow-wrap: anywhere; }
+}
+
 /* Extra Small Mobile (<= 360px) */
 @media (max-width: 360px) {
     .page-title {
@@ -2084,7 +2100,7 @@ img.post-avatar.post-avatar-img {
     }
 
     .profile-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }
 
@@ -2109,11 +2125,12 @@ img.post-avatar.post-avatar-img {
 }
 .profile-picture-container { margin-top: 0; }
 .profile-name { font-weight: 750; letter-spacing: -.02em; }
-.profile-stats { gap: 12px; }
+.profile-stats { gap: 0; }
 .profile-stats > * { border-radius: 12px; }
 @media (max-width: 768px) {
   .profile-section { padding: 0 14px 28px; }
   .profile-header { padding: 20px 16px; margin: 8px 0 14px; }
   .profile-actions { margin-top: 18px; padding-left: 0; justify-content: center; flex-wrap: wrap; }
   .profile-info { width: 100%; }
+  .profile-stats { gap: 0; }
 }

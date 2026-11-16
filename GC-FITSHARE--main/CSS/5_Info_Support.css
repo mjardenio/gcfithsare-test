@@ -484,6 +484,23 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
     }
 }
 
+/* Shared spacing and wrapping for injected support content. */
+.content-area { min-width: 0; overflow-wrap: anywhere; }
+.content-section h2 { line-height: 1.25; margin-bottom: 18px; }
+.content-section h3 { line-height: 1.35; margin: 26px 0 12px; }
+.content-section p { max-width: 78ch; }
+.content-section ul { margin: 14px 0 20px; }
+.content-section ul li { padding-top: 8px; padding-bottom: 8px; }
+.support-container, .support-grid, .support-card { min-width: 0; }
+.support-card { padding: clamp(18px, 3vw, 32px); gap: 14px; }
+.support-card p { min-height: 0; line-height: 1.6; }
+.content-area .help-topics-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+@media (max-width: 600px) {
+  .content-area { padding: 22px 18px; min-height: 0; }
+  .support-card h3 { font-size: 18px; }
+  .support-contact, .faq, .help-topic { padding: 18px; }
+}
+
 /* Cross-device layout refinements */
 @media (max-width: 1024px) {
   .main-content { width: 100%; min-width: 0; padding-top: 60px; }

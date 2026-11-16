@@ -1231,12 +1231,19 @@ body.dark-mode .read-more-btn {
 
 .comment-thread--nested {
     margin-top: 12px;
-    margin-left: calc(12px + min(var(--thread-depth, 1), 8) * 20px);
+    margin-left: 0;
     padding: 12px 14px;
     border-radius: 8px;
     border-left: 3px solid var(--primary-color);
     background: rgba(29, 209, 161, 0.03);
 }
+.comment-thread.comment-depth-2 { margin-left: -12px; }
+.comment-thread.comment-depth-3 { margin-left: -24px; }
+.comment-thread.comment-depth-4 { margin-left: -36px; }
+.comment-thread.comment-depth-5 { margin-left: -48px; }
+.comment-thread.comment-depth-6 { margin-left: -60px; }
+.comment-thread.comment-depth-7,
+.comment-thread.comment-depth-8 { margin-left: -72px; }
 
 body.dark-mode .comment-thread {
     background: #1a1a1a;
@@ -1255,9 +1262,14 @@ body.dark-mode .comment-thread--nested {
 
 .comment-replies-cluster {
     margin-top: 8px;
-    margin-left: 8px;
+    margin-left: 0;
     padding-left: 12px;
     border-left: 2px solid var(--border-color);
+}
+.comment-replies-cluster[data-nesting-depth="1"] { margin-left: 20px; }
+.comment-replies-cluster[data-nesting-depth]:not([data-nesting-depth="1"]) {
+    padding-left: 0;
+    border-left: 0;
 }
 
 .comment-replies-extra {
@@ -1639,6 +1651,13 @@ body.dark-mode .comment-replies {
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border-color);
 }
+.full-post-actions .post-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.full-post-actions .post-action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 42px; min-height: 42px; }
+.full-post-actions .post-action-btn svg { flex: 0 0 auto; }
+.full-post-actions .upvote-count, .full-post-actions .downvote-count { min-width: 1ch; line-height: 1; }
+.full-post-header { gap: 12px; flex-wrap: wrap; }
+.full-post-header .post-author { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.full-post-header .post-category-badge { margin-left: auto; }
 
 .full-post-comments h3 {
     font-size: 18px;
@@ -3165,10 +3184,6 @@ body.dark-mode .expert-pending-banner {
   .create-post-btn:hover { background: #00b894; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,184,148,.24); }
   .create-post-btn:active { background: #009f80; transform: translateY(0); }
 }
-@media (max-width: 600px) {
-  .comment-thread--nested { margin-left: min(calc(var(--thread-depth, 1) * 12px), 48px); }
-}
-
 @media (min-width: 769px) {
   .feed-toolbar .search-container {
     border: 1px solid var(--border-color);
@@ -3196,6 +3211,11 @@ body.dark-mode .search-btn { color: var(--primary-color); }
   .notif-time { grid-column: 2; grid-row: 1; white-space: normal; }
   .notif-card-content { grid-column: 2; grid-row: 2; }
   .notif-message { overflow-wrap: anywhere; }
+  .full-post-modal { width: min(800px, calc(100vw - 20px)); max-height: min(92dvh, calc(100vh - 20px)); padding: 16px; }
+  .full-post-header { align-items: flex-start; }
+  .full-post-header .post-category-badge { margin-left: 52px; }
+  .full-post-actions .post-actions { gap: 6px; }
+  .full-post-actions .post-action-btn { padding: 8px; }
 }
 
 @media (max-width: 768px) {

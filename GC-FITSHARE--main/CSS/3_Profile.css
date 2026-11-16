@@ -584,6 +584,7 @@ body.dark-mode .top-bar {
     background: linear-gradient(135deg, #1dd1a1, #0984e3);
     box-shadow: 0 2px 10px rgba(9, 132, 227, 0.25);
 }
+.profile-info .profile-expert-role-label { width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
 
 body.dark-mode .profile-expert-role-label {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
@@ -2133,4 +2134,5 @@ img.post-avatar.post-avatar-img {
   .profile-actions { margin-top: 18px; padding-left: 0; justify-content: center; flex-wrap: wrap; }
   .profile-info { width: 100%; }
   .profile-stats { gap: 0; }
+  .profile-info .profile-expert-role-label { align-self: center; }
 }

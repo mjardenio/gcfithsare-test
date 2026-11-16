@@ -2026,11 +2026,6 @@ function closeFullPostModal() {
 
 // ─── Event Listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
-    // sidebar toggle
-    document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-        document.getElementById('sidebar')?.classList.toggle('hidden');
-    });
-
     if (isOwnProfile) {
         document.getElementById('editProfileBtn')?.addEventListener('click', openEditProfileModal);
         document.getElementById('lifestyleSetupBtn')?.addEventListener('click', () => {

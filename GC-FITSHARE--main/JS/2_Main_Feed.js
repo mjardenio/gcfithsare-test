@@ -325,6 +325,15 @@ async function openNotificationsModal() {
         list.innerHTML = data.map((n) => {
             const actorName = n.actor?.full_name || n.actor?.username || 'Someone';
             const time = formatDate(n.created_at);
+            const notificationIcons = {
+                post_like: '<path d="M7 10v12"/><path d="M15 5.9 14 10h5.6a2 2 0 0 1 1.9 2.6l-2.1 7A2 2 0 0 1 17.5 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h2.2l4-7a2 2 0 0 1 3.8.9Z"/>',
+                post_downvote: '<path d="M7 14V2"/><path d="M15 18.1 14 14h5.6a2 2 0 0 0 1.9-2.6l-2.1-7A2 2 0 0 0 17.5 3H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2.2l4 7a2 2 0 0 0 3.8-.9Z"/>',
+                comment: '<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/>',
+                comment_reply: '<path d="m9 17-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>',
+                follow: '<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6m3-3h-6"/>',
+                admin_flagged_post: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="M12 8v4m0 4h.01"/>'
+            };
+            const iconPath = notificationIcons[n.type] || '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10 21h4"/>';
             const actionBtn = n.type === 'follow' && n.actor?.id
                 ? `<button type="button" class="btn-primary notif-view-profile" data-user-id="${n.actor.id}" style="padding:6px 10px;font-size:12px;">View Profile</button>`
                 : '';
@@ -339,9 +348,7 @@ async function openNotificationsModal() {
             return `
                 <div class="notif-card ${isUnread ? 'notif-unread' : 'notif-read'}">
                     <div class="notif-card-header">
-                        <div class="notif-card-icon">
-                            ${n.type === 'follow' ? 'Follow' : n.type === 'comment_reply' ? 'Reply' : n.type === 'post_like' ? 'Like' : 'Update'}
-                        </div>
+                        <div class="notif-card-icon" aria-label="${escapeHtml(n.type || 'update')}" role="img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPath}</svg></div>
                         <div class="notif-card-content">
                             <p class="notif-title">${escapeHtml(n.title || 'Notification')}</p>
                             <p class="notif-message">${escapeHtml(n.message || `${actorName} sent an update.`)}</p>

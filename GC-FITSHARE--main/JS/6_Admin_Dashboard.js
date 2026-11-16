@@ -643,10 +643,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyAdminMobileSidebarDefaults();
         window.addEventListener('resize', syncAdminSidebarDesktopBreakpoint);
 
-        document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-            document.getElementById('sidebar')?.classList.toggle('hidden');
-        });
-
         await loadAdminDashboard();
     } catch (err) {
         console.error('Admin dashboard init failed:', err);

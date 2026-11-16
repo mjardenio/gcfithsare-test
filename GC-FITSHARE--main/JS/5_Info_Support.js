@@ -162,10 +162,5 @@ function showSection(section) {
 
 // ─── Setup Event Listeners ──────────────────────────────────────────────────
 function setupEventListeners() {
-    // sidebar toggle
-    document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-        document.getElementById('sidebar')?.classList.toggle('hidden');
-    });
-
     // Dark mode + logout — handled by 0_Footer.js
 }

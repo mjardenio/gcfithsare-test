@@ -446,11 +446,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateSidebarOverlay = () => {
         const sidebar = document.getElementById('sidebar');
+        const toggle = document.getElementById('sidebarToggle');
+        const isOpen = !!sidebar && !sidebar.classList.contains('hidden');
+        toggle?.setAttribute('aria-expanded', String(isOpen));
         if (!sidebar || window.innerWidth > 1024) {
             overlay?.classList.remove('active');
             return;
         }
-        if (sidebar.classList.contains('hidden')) {
+        if (!isOpen) {
             overlay?.classList.remove('active');
         } else {
             overlay?.classList.add('active');
@@ -490,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebar.classList.add('hidden');
             sidebar.dataset.userInteracted = 'true';
         }
+        document.getElementById('sidebarToggle')?.setAttribute('aria-expanded', 'false');
         overlay.classList.remove('active');
     });
 
@@ -502,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!sidebar.contains(e.target) && !toggle?.contains(e.target)) {
             sidebar.classList.add('hidden');
             sidebar.dataset.userInteracted = 'true';
+            toggle?.setAttribute('aria-expanded', 'false');
             updateSidebarOverlay();
         }
     });

@@ -21,8 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase = getSupabaseClient();
     currentUser = await checkUserAuthentication();
 
-    setupSidebarToggleOnly();
-
     if (!currentUser) {
         console.warn('Auth unavailable during page init; skipping redirect to avoid logout loops.');
         return;
@@ -208,12 +206,6 @@ async function loadUserData() {
 }
 
 // ─── Setup Event Listeners ──────────────────────────────────────────────────
-function setupSidebarToggleOnly() {
-    document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-        document.getElementById('sidebar')?.classList.toggle('hidden');
-    });
-}
-
 function setupFormEventListeners() {
     const form = document.getElementById('expertForm');
     form.addEventListener('submit', handleFormSubmit);

@@ -273,6 +273,15 @@ body.dark-mode {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+.feed-toolbar .notification-btn.header-tooltip::after {
+    left: auto;
+    right: 0;
+    transform: translateY(-4px);
+}
+.feed-toolbar .notification-btn.header-tooltip:hover::after,
+.feed-toolbar .notification-btn.header-tooltip:focus-visible::after {
+    transform: translateY(0);
+}
 
 /* Top Bar Spacer */
 .top-bar-spacer {
@@ -1738,9 +1747,13 @@ body.dark-mode .comment-replies {
 }
 
 .notif-card-icon {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
     font-size: 20px;
-    flex-shrink: 0;
-    margin-top: 2px;
+    margin: 0;
 }
 .notif-card-icon svg { display: block; width: 20px; height: 20px; }
 
@@ -3104,8 +3117,7 @@ body.dark-mode .expert-pending-banner {
 
     .feed-actions {
         justify-content: space-around;
-        padding-top: 6px;
-        border-top: 1px solid var(--border-color);
+        padding-top: 0;
     }
 
     .filter-bar {
@@ -3203,13 +3215,8 @@ body.dark-mode .search-btn { color: var(--primary-color); }
 .wellness-modal .form-group { margin-bottom: 18px; }
 .wellness-modal .checkbox-grid { gap: 8px; }
 .wellness-modal .checkbox-card { min-width: 0; overflow-wrap: anywhere; }
-.feed-toolbar .notification-btn { border-top: 0; }
-.feed-toolbar .notification-btn,
-.feed-toolbar .notification-btn:hover,
-.feed-toolbar .notification-btn:focus-visible,
-.feed-toolbar .notification-btn:active {
-  border-block-start: 0;
-  background-image: none;
+@media (min-width: 769px) {
+  .feed-toolbar .feed-actions { margin-right: 10px; }
 }
 
 /* Replies share a single thread surface; entries inside it stay unboxed. */

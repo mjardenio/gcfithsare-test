@@ -1422,18 +1422,38 @@ async function openCommentThread(postId, post, opts = {}) {
 
 const COMMENT_REPLY_PREVIEW_LIMIT = 3;
 
+function escapeMentionRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * Highlights @mentions after escaping (safe).
- * First token is always included; extra tokens only if they start with uppercase (real names),
- * so "@Jerald Pangan yeah" highlights only "@Jerald Pangan", not the whole sentence.
+ * A reply's leading @Name is highlighted in full. Every other @mention is a single
+ * username token, so the reply text that follows (for example "Hi") stays unstyled.
  */
-function formatCommentBodyDisplay(raw) {
-    const esc = escapeHtml(raw || '');
-    const mentionCore =
-        '(?:[^\\s@<>]+)(?:\\s+[A-Z\\u00c0-\\u024f\\u00d1\\u00dc][^\\s@<>]*){0,2}';
-    let formatted = esc.replace(
-        new RegExp(`(^|[\\s])@(${mentionCore})(?=$|[\\s]|[.,!?;:])`, 'gi'),
-        (_, lead, mention) => `${lead}<span class="comment-mention">@${mention}</span>`
+function formatCommentBodyDisplay(raw, mentionName) {
+    let formatted = escapeHtml(raw || '');
+    const name = String(mentionName || '').trim().replace(/\s+/g, ' ');
+    if (name) {
+        const escapedName = escapeHtml(name);
+        const replyMention = new RegExp(
+            `^@${escapeMentionRegExp(escapedName)}(?=$|[\\s]|[.,!?;:])`,
+            'i'
+        );
+        formatted = formatted.replace(
+            replyMention,
+            (match) => `<span class="comment-mention">${match}</span>`
+        );
+    }
+    formatted = formatted.replace(
+        /(^|[\s])@([^\s@<>.,!?;:]+)(?=$|[\s]|[.,!?;:])/g,
+        (full, lead, mention, offset, str) => {
+            const before = str.slice(0, offset);
+            const opens = (before.match(/<span class="comment-mention">/g) || []).length;
+            const closes = (before.match(/<\/span>/g) || []).length;
+            if (opens > closes) return full;
+            return `${lead}<span class="comment-mention">@${mention}</span>`;
+        }
     );
     // Apply basic markdown formatting
     formatted = formatted
@@ -1517,7 +1537,7 @@ function buildCommentTreeHtml(comments, postId) {
                     ${commentAdminBadge}
                     <small>${formatDate(c.created_at)}</small>
                 </div>
-                <p class="comment-text">${formatCommentBodyDisplay(c.body)}</p>
+                <p class="comment-text">${formatCommentBodyDisplay(c.body, parentAuthor)}</p>
                 <div class="comment-actions">${replyBtn}</div>
                 ${nested}
             </div>`;

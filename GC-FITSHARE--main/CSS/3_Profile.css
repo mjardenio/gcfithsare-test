@@ -2130,9 +2130,17 @@ img.post-avatar.post-avatar-img {
 .profile-stats > * { border-radius: 12px; }
 @media (max-width: 768px) {
   .profile-section { padding: 0 14px 28px; }
-  .profile-header { padding: 20px 16px; margin: 8px 0 14px; }
-  .profile-actions { margin-top: 18px; padding-left: 0; justify-content: center; flex-wrap: wrap; }
-  .profile-info { width: 100%; }
+  .profile-header { padding: 16px 14px; margin: 8px 0 12px; gap: 10px; }
+  .profile-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; margin: 8px 0 0; padding: 0; gap: 8px; }
+  .profile-info { width: 100%; padding: 0; }
   .profile-stats { gap: 0; }
   .profile-info .profile-expert-role-label { align-self: center; }
+  .profile-bio { margin-bottom: 10px; line-height: 1.55; }
+  .profile-details { gap: 6px; margin-top: 8px; padding-top: 10px; }
+  .profile-actions > button { min-height: 44px; width: 100%; padding: 9px 10px; }
+}
+
+@media (min-width: 769px) {
+  .profile-info { padding: 0 0 0 16px; }
+  .profile-actions { margin-top: 12px; padding-left: 0; align-items: center; flex-wrap: wrap; }
 }

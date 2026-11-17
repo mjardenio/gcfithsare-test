@@ -1826,6 +1826,9 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
                         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
                 </button>
+                <button class="post-action-btn full-post-share-btn" data-post-id="${postId}" title="Share" aria-label="Share post">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.4m-6.8 7 6.8 4.1"/></svg>
+                </button>
             </div>
         </div>
         
@@ -1924,6 +1927,9 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
     modal.querySelector('.full-post-actions .bookmark-btn')?.addEventListener('click', () => {
         const actionsEl = modal.querySelector('.full-post-actions');
         if (actionsEl && typeof toggleBookmark === 'function') toggleBookmark(postId, actionsEl);
+    });
+    modal.querySelector('.full-post-share-btn')?.addEventListener('click', (e) => {
+        void sharePost(e, postId, sourcePost || { title, body });
     });
 }
 

@@ -1141,3 +1141,48 @@ body.dark-mode {
   .form-section, .info-section, .unavailable-section { padding: 16px 13px; }
   .date-picker input, .date-picker button { width: 100%; }
 }
+
+/* Mobile header: title centered, menu pinned like Home. */
+@media (max-width: 1024px) {
+  .main-content > .top-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding-top: max(10px, env(safe-area-inset-top, 0px));
+    padding-bottom: 10px;
+    padding-left: max(56px, calc(env(safe-area-inset-left, 0px) + 52px));
+    padding-right: max(56px, calc(env(safe-area-inset-right, 0px) + 52px));
+    gap: 0;
+  }
+  .main-content > .top-bar .sidebar-toggle {
+    position: absolute;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+    margin: 0;
+    z-index: 2;
+  }
+  .main-content > .top-bar .sidebar-toggle:hover {
+    transform: translateY(-50%) scale(1.1);
+  }
+  .main-content > .top-bar .page-title {
+    flex: 1 1 auto;
+    width: 100%;
+    margin: 0;
+    text-align: center;
+    font-size: clamp(16px, 4.5vw, 20px);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .main-content > .top-bar .top-bar-spacer { display: none; }
+}

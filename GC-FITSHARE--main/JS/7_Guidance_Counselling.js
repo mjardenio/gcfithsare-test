@@ -327,15 +327,14 @@ function resetTimeSlotSelect() {
 async function loadBookedSlotsForDate(date) {
     bookedSlotsForDate = new Set();
     try {
-        // counselling_booked_slots view exposes only date/time/status so
+        // gcfs_booked_slots() exposes only date/time/status so
         // students can see booked slots without reading other bookings.
         const { data: slots, error } = await supabase
-            .from('counselling_booked_slots')
-            .select('time_slot, status')
-            .eq('session_date', date);
+            .rpc('gcfs_booked_slots');
 
         if (!error && Array.isArray(slots)) {
             slots.forEach(s => {
+                if (String(s.session_date || '') !== date) return;
                 const t = String(s.time_slot || '').slice(0, 5);
                 if (t) bookedSlotsForDate.add(t);
             });
@@ -431,14 +430,15 @@ async function scheduleSession() {
 
     try {
         // Double-booking guard: re-check the slot is still free
-        const { data: clash } = await supabase
-            .from('counselling_booked_slots')
-            .select('time_slot')
-            .eq('session_date', selectedDate)
-            .eq('time_slot', selectedTime)
-            .limit(1);
+        const { data: bookedRows } = await supabase
+            .rpc('gcfs_booked_slots');
 
-        if (clash && clash.length > 0) {
+        const clash = (bookedRows || []).filter(r =>
+            String(r.session_date || '') === selectedDate &&
+            String(r.time_slot || '').slice(0, 5) === String(selectedTime || '').slice(0, 5)
+        );
+
+        if (clash.length > 0) {
             CustomAlert.show('Slot no longer available', 'Someone else just booked that time slot. Please pick another time.', 'warning');
             await loadBookedSlotsForDate(selectedDate);
             return;

@@ -3,7 +3,7 @@
  * 2_Main_Feed.js — HOME FEED (posts, comments, votes, search, notifications)
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * PURPOSE
+ * PURPOSE 
  *   Main social feed: load posts, filters, create post, AI moderation hook,
  *   comments tree, bookmarks, reports, wellness prompts, recommendations.
  *

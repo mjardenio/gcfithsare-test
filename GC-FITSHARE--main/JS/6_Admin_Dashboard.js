@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * PURPOSE
- *   Gate access via public.admins + users.is_admin; expert applications;
+ *   Gate access via public.admins + users.is_admin; expert applications; 
  *   user-reported flags; AI moderation summary; suspend/ban; revoke expert.
  *
  * DEPENDS ON
@@ -617,6 +617,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize admin tool cards
     try {
         initAdminToolCards();
+                document.querySelectorAll('[data-report-format]').forEach(button => {
+            button.addEventListener('click', () => {
+                downloadDashboardReport(button.dataset.reportFormat);
+            });
+        });
     } catch (error) {
         console.warn('Admin tool cards initialization failed:', error);
     }
@@ -761,7 +766,7 @@ async function loadExpertApplications() {
         return visible;
     } catch (err) {
         container.innerHTML = `<p class="empty">Failed to load expert applications: ${escapeHtml(err?.message || 'Unknown error')}</p>`;
-        return [];
+        return null;
     }
 }
 
@@ -784,7 +789,7 @@ async function loadAiModerationDashboardData() {
         return { total: count || 0, rows: rows || [] };
     } catch (e) {
         console.warn('AI moderation attempts:', e?.message || e);
-        return { total: 0, rows: [] };
+        return { total: null, rows: [] };
     }
 }
 
@@ -893,26 +898,131 @@ function filterExperts(searchTerm) {
     }
 }
 
-function updateAdminSectionSummaries(applications, expertsResult, historyResult, userReportedLen, aiTotal) {
-    const pending = applications.filter((a) => String(a.status || 'pending').toLowerCase() === 'pending').length;
-    const totalApps = applications.length;
-    const badgeApps = document.getElementById('expertAppsBadge');
-    if (badgeApps) badgeApps.textContent = pending;
+let dashboardReport;
 
-    const badgeActive = document.getElementById('activeExpertsBadge');
-    if (badgeActive) badgeActive.textContent = expertsResult?.count ?? 0;
+function showDashboardReport(metrics) {
+    const updated = new Date().toISOString();
+    dashboardReport = { updated, metrics };
 
-    const badgeHist = document.getElementById('expertHistoryBadge');
-    if (badgeHist) badgeHist.textContent = historyResult?.count ?? 0;
+    const maximum = Math.max(1, ...metrics.map(metric => metric.count ?? 0));
 
-    const badgeRep = document.getElementById('reportsBadge');
-    if (badgeRep) badgeRep.textContent = userReportedLen;
+    for (const group of ['Moderation', 'Wellness experts']) {
+        const chart = document.querySelector('[data-chart="' + group + '"]');
+        chart.replaceChildren();
 
-    const badgeAi = document.getElementById('aiBlocksBadge');
-    if (badgeAi) badgeAi.textContent = aiTotal;
+        for (const { label, count, badge } of metrics.filter(metric => metric.group === group)) {
+            document.getElementById(badge).textContent = count ?? '—';
 
-    const histStat = document.getElementById('expertApprovedHistoryCount');
-    if (histStat) histStat.textContent = String(historyResult?.count ?? 0);
+            const row = document.createElement('div');
+            row.className = 'report-row';
+
+            const name = document.createElement('span');
+            name.textContent = label;
+
+            const value = document.createElement('strong');
+            value.textContent = count ?? 'Unavailable';
+
+            const track = document.createElement('div');
+            track.className = 'report-track';
+            track.setAttribute('aria-hidden', 'true');
+
+            const bar = document.createElement('div');
+            bar.style.width = (100 * (count ?? 0) / maximum) + '%';
+
+            track.append(bar);
+            row.append(name, value, track);
+            chart.append(row);
+        }
+    }
+
+    document.getElementById('reportStamp').textContent =
+        'Dashboard snapshot · ' + new Date(updated).toLocaleString();
+
+    document.querySelectorAll('[data-report-format]').forEach(button => {
+        button.disabled = false;
+    });
+}
+function makeDashboardPdf(report) {
+    const lines = [
+        'GC FitShare | Admin dashboard report',
+        report.updated,
+        'Scope: Current dashboard data',
+        ''
+    ];
+
+    for (const group of ['Moderation', 'Wellness experts']) {
+        lines.push(group);
+
+        for (const metric of report.metrics.filter(item => item.group === group)) {
+            lines.push(metric.label + ': ' + (metric.count ?? 'Unavailable'));
+        }
+
+        lines.push('');
+    }
+
+    // The report uses fixed English labels and an ISO timestamp.
+    const escapePdf = line => line.replace(/[\\()]/g, character => '\\' + character);
+    const commands = lines.map(line => '(' + escapePdf(line) + ') Tj T*').join('\n');
+    const stream = 'BT /F1 13 Tf 21 TL 48 780 Td\n' + commands + '\nET';
+
+    const objects = [
+        '<< /Type /Catalog /Pages 2 0 R >>',
+        '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] ' +
+            '/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+        '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+        '<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream'
+    ];
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [];
+
+    objects.forEach((object, index) => {
+        offsets.push(pdf.length);
+        pdf += (index + 1) + ' 0 obj\n' + object + '\nendobj\n';
+    });
+
+    const start = pdf.length;
+    pdf += 'xref\n0 6\n0000000000 65535 f \n';
+
+    for (const offset of offsets) {
+        pdf += String(offset).padStart(10, '0') + ' 00000 n \n';
+    }
+
+    return pdf + 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + start + '\n%%EOF\n';
+}
+
+function downloadDashboardReport(format) {
+    if (!dashboardReport) return;
+
+    const { updated, metrics } = dashboardReport;
+    let blob;
+
+    if (format === 'csv') {
+        const rows = [
+            ['Snapshot UTC', 'Category', 'Metric', 'Count'],
+            ...metrics.map(({ group, label, count }) => [
+                updated, group, label, count ?? 'Unavailable'
+            ])
+        ];
+
+        const csv = rows.map(row =>
+            row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',')
+        ).join('\r\n');
+
+        blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+    } else if (format === 'pdf') {
+        blob = new Blob([makeDashboardPdf(dashboardReport)], { type: 'application/pdf' });
+    } else {
+        return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'GC-FitShare-Dashboard-' + updated.replace(/[:.]/g, '-') + '.' + format;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
 // ─── Orchestrate full dashboard refresh ──────────────────────────────────────
@@ -938,24 +1048,54 @@ async function loadAdminDashboard() {
     const userReported = flaggedRows.filter(isUserReportModerationQueueRow);
     const pendingPosts = pendingPostsResult?.rows || [];
 
-    document.getElementById('expertPendingCount').textContent = String(
-        applications.filter((a) => String(a.status || 'pending').toLowerCase().trim() === 'pending').length
-    );
-    const activeCountEl = document.getElementById('activeExpertsCount');
-    if (activeCountEl) activeCountEl.textContent = String(expertsResult?.count ?? 0);
-    document.getElementById('pendingPostsCount').textContent = String(pendingPosts.length);
-    document.getElementById('reportedCount').textContent = String(userReported.length);
-    const aiCountEl = document.getElementById('aiBlockAttemptCount');
-    if (aiCountEl) aiCountEl.textContent = String(aiData.total);
+    const pendingApps = applications?.filter(app =>
+        String(app.status || 'pending').trim().toLowerCase() === 'pending'
+    ).length;
 
-    // Update card badges
-    const pendingPostsBadge = document.getElementById('pendingPostsBadge');
-    if (pendingPostsBadge) pendingPostsBadge.textContent = pendingPosts.length;
-    
-    const reportedAccountsBadge = document.getElementById('reportedAccountsBadge');
-    if (reportedAccountsBadge) reportedAccountsBadge.textContent = reportedAccountsResult?.count ?? 0;
-
-    updateAdminSectionSummaries(applications, expertsResult, historyResult, userReported.length, aiData.total);
+    showDashboardReport([
+        {
+            group: 'Moderation',
+            label: 'Pending post approvals',
+            count: pendingPostsResult.errorMessage ? null : pendingPosts.length,
+            badge: 'pendingPostsBadge'
+        },
+        {
+            group: 'Moderation',
+            label: 'User-reported posts',
+            count: flaggedResult.errorMessage ? null : userReported.length,
+            badge: 'reportsBadge'
+        },
+        {
+            group: 'Moderation',
+            label: 'Reported accounts',
+            count: reportedAccountsResult.errorMessage ? null : reportedAccountsResult.rows.length,
+            badge: 'reportedAccountsBadge'
+        },
+        {
+            group: 'Moderation',
+            label: 'AI block attempts',
+            count: aiData.total,
+            badge: 'aiBlocksBadge'
+        },
+        {
+            group: 'Wellness experts',
+            label: 'Pending applications',
+            count: pendingApps,
+            badge: 'expertAppsBadge'
+        },
+        {
+            group: 'Wellness experts',
+            label: 'Active wellness experts',
+            count: expertsResult.errorMessage ? null : expertsResult.count,
+            badge: 'activeExpertsBadge'
+        },
+        {
+            group: 'Wellness experts',
+            label: 'Approved experts history',
+            count: historyResult.errorMessage ? null : historyResult.count,
+            badge: 'expertHistoryBadge'
+        }
+    ]);
 
     renderAiBlockAttemptsList(aiData.rows);
     renderApprovedExpertsList(expertsResult);

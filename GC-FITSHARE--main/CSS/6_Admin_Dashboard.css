@@ -3,7 +3,7 @@
     --secondary-color: #0984e3;
     --light-bg: #f5f6fa;
     --card-bg: #ffffff;
-    --text-primary: #2d3436;
+    --text-primary: #2d3436; 
     --text-secondary: #636e72;
     --border-color: #dfe6e9;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -360,9 +360,12 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
     right: 16px;
     background: var(--primary-color);
     color: white;
-    padding: 4px 12px;
+    padding: 6px 12px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 24px;
+    line-height: 1.15;
+    min-width: 42px;
+    text-align: center;
     font-weight: 700;
 }
 
@@ -1225,4 +1228,102 @@ textarea.expert-decision-note:focus {
     text-overflow: ellipsis;
   }
   .main-content > .top-bar .top-bar-spacer { display: none; }
+}
+.admin-tools-grid {
+    margin-top: 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+
+.admin-tool-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-tool-card .btn-open-tool {
+    margin-top: auto;
+}
+
+.dashboard-report {
+    min-width: 0;
+    padding: clamp(16px, 3vw, 32px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.report-heading,
+.report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.report-heading {
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.report-heading h2 {
+    font-size: 1.35rem;
+}
+
+.report-heading p {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.report-actions button {
+    padding: 9px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+}
+
+.report-actions button:hover,
+.report-actions button:focus-visible {
+    border-color: var(--primary-color);
+}
+
+.report-actions button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.report-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 32px;
+    margin-top: 24px;
+}
+
+.report-charts h3 {
+    font-size: 1rem;
+}
+
+.report-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 8px;
+    margin-top: 14px;
+    font-size: 0.9rem;
+}
+
+.report-track {
+    grid-column: 1 / -1;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--border-color);
+}
+
+.report-track > div {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary-color);
 }

@@ -29,6 +29,9 @@ Reject if the post contains:
 - Phishing links or scam content
 - Content unrelated to wellness (diet, exercise, time management)
 - Explicit or inappropriate content
+- Profanity or vulgar words aimed at a person as an insult, name-calling, threats, or slurs.
+  NOTE: Mild profanity used for emphasis about workouts or effort (e.g. "this workout is fucking brutal",
+  "that last set was shit") is ALLOWED — judge by context, not by the word alone.
 
 Post to analyze:
 Title: ${title}
@@ -44,22 +47,31 @@ You filter COMMENT text for GC FitShare. Respond ONLY with valid JSON:
   "flags": ["list", "of", "issues"] or []
 }
 
+CONTEXT RULE — profanity is judged by HOW it is used, not merely that a word appears:
+- ALLOW mild or exclamatory profanity used for emphasis about workouts, effort, or frustration
+  (e.g. "this set is fucking brutal", "I almost died on that last rep, shit", "that PR was insane af").
+- REJECT profanity only when it is aimed at a person as an insult/name-calling, part of a threat
+  or harassment, sexually explicit, or a slur/epithet.
+
 Reject (approved=false) if the comment contains ANY of:
-- Profanity / vulgar / obscene words in English OR Filipino/Tagalog (examples: fuck, shit, bitch, asshole, gago, putangina, tangina, ulol, tarantado, lecheng, punyeta)
-- Insults used as name-calling (examples: idiot, stupid, moron, dumbass, bobo, tanga)
+- Profanity / vulgar / obscene words aimed at someone (English or Filipino/Tagalog —
+  examples of targeted abuse: fuck you, piece of shit, putangina mo, tangina mo, bwisit ka, hayop ka)
+- Insults used as name-calling (examples: idiot, stupid, moron, dumbass, bobo, tanga, tarantado, ulol, lecheng, punyeta)
 - Sexually explicit / graphic sexual wording
 - Common abusive slurs or epithets
 
-Always approve clean disagreement, criticism, emoji, typos, and non-obscene slang.
+Always approve clean disagreement, criticism, emoji, typos, mild emphasis profanity, and non-obscene slang.
 
 Comment text:
 ${body || "(empty)"}
 `;
 
+// Local hard-block list — kept deliberately narrow: only unambiguous severe terms.
+// Mild profanity (fuck, shit, bitch, idiota, etc.) is left to the AI prompt so
+// harmless fitness talk using curse words for emphasis is not false-positived.
 const MOD_PROFANITY_PATTERNS = [
-    /\b(fuck(?:ing|er|ed)?|shit(?:ty)?|bitch(?:es)?|asshole|bastard|dickhead|motherfucker|cunt)\b/i,
-    /\b(idiot|stupid|moron|dumbass|retard(?:ed)?)\b/i,
-    /\b(gago|gaga|putangina|tangina|puta|ulol|tarantado|leche(?:ng)?|punyeta|bobo|tanga|inutil)\b/i,
+    /\b(cunt|motherfucker)\b/i,
+    /\b(putangina|tangina|puta|bwisit|ulol|tarantado|lecheng?|punyeta|gago|gaga)\b/i,
 ];
 
 function findLocalProfanityHit(text) {
@@ -213,5 +225,31 @@ async function analyzeContentWithGemini(title, body, hashtags, options = {}) {
             source: 'edge-function-fallback',
             debug: detail
         };
+    }
+}
+
+/**
+ * Log a blocked moderation attempt into ai_moderation_attempts for admin review.
+ * content_type distinguishes 'post' vs 'comment'. Tolerates schemas missing the
+ * newer columns (retries without content_type on column errors).
+ */
+async function logAiModerationAttempt({ userId, preview, reason, contentType } = {}) {
+    try {
+        const supabase = (typeof getSupabaseClient === 'function') ? getSupabaseClient() : null;
+        if (!supabase || !userId) return;
+        const row = {
+            user_id: userId,
+            title_preview: String(preview || '').slice(0, 300),
+            reason: String(reason || '').slice(0, 2000),
+            content_type: contentType === 'comment' ? 'comment' : 'post'
+        };
+        let { error } = await supabase.from('ai_moderation_attempts').insert(row);
+        if (error && /column|content_type|is_seen|seen_at|seen_by/i.test(error.message || '')) {
+            delete row.content_type;
+            ({ error } = await supabase.from('ai_moderation_attempts').insert(row));
+        }
+        if (error) console.warn('ai_moderation_attempts insert failed:', error.message || error);
+    } catch (e) {
+        console.warn('logAiModerationAttempt skipped:', e?.message || e);
     }
 }

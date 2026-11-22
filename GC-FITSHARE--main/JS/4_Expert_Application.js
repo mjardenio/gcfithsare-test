@@ -3,7 +3,7 @@
  * 4_Expert_Application.js — WELLNESS EXPERT APPLICATION FORM
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * PURPOSE
+ * PURPOSE 
  *   Multi-step application, file upload, validation; admins see a locked message.
  *
  * DEPENDS ON

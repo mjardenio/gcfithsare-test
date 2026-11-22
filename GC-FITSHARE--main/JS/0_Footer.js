@@ -5,7 +5,7 @@
  *
  * PURPOSE
  *   Dark mode + Admin Verify modal + admin nav visibility cache + logout.
- *   showAppAlert() — use this instead of alert(); needs 0_Alerts.js (CustomAlert).
+ *   showAppAlert() — use this instead of alert(); needs 0_Alerts.js (CustomAlert). 
  *
  * DEPENDS ON
  *   0_Utilities.js (getSupabaseClient, escapeHtml), 0_Alerts.js (CustomAlert).

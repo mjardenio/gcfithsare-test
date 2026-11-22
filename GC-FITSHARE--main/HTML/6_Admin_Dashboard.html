@@ -90,7 +90,7 @@
                 <svg class="wrench-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 <span>Admin Verify</span>
             </button>
-            <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode" role="switch" aria-checked="false">
+            <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode">
                 <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 <span>Dark Mode</span>
             </button>
@@ -114,34 +114,7 @@
         </div>
 
         <div class="dashboard-container" id="adminDashboardRoot">
-            <p class="dashboard-accordion-hint">Click on any card to open the tool in a modal window.</p>
-
-            <div class="stats-grid stats-grid-six">
-                <div class="stat-card">
-                    <p class="stat-label">Pending Expert Applications</p>
-                    <h2 id="expertPendingCount">0</h2>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">Active wellness experts</p>
-                    <h2 id="activeExpertsCount">0</h2>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">Approved experts (all time)</p>
-                    <h2 id="expertApprovedHistoryCount">0</h2>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">Pending Post Approvals</p>
-                    <h2 id="pendingPostsCount">0</h2>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">User-Reported Posts</p>
-                    <h2 id="reportedCount">0</h2>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">AI post block attempts</p>
-                    <h2 id="aiBlockAttemptCount">0</h2>
-                </div>
-            </div>
+       
 
             <!-- Admin Tool Cards -->
             <div class="admin-tools-grid">
@@ -150,7 +123,7 @@
                     <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     <h3>Pending Post Approvals</h3>
                     <p>Review and approve or reject posts awaiting moderation</p>
-                    <span class="card-badge" id="pendingPostsBadge">0</span>
+                    <span class="card-badge" id="pendingPostsBadge">-</span>
                     <button class="btn-open-tool">Open Tool</button>
                 </div>
 
@@ -208,6 +181,31 @@
                     <button class="btn-open-tool">Open Tool</button>
                 </div>
             </div>
+            <section class="dashboard-report" aria-labelledby="reportTitle">
+    <header class="report-heading">
+        <div>
+            <h2 id="reportTitle">Dashboard analytics</h2>
+            <p id="reportStamp" role="status">Loading dashboard data…</p>
+        </div>
+
+        <div class="report-actions">
+            <button type="button" data-report-format="csv" disabled>Download CSV</button>
+            <button type="button" data-report-format="pdf" disabled>Download PDF</button>
+        </div>
+    </header>
+
+    <div class="report-charts">
+        <section>
+            <h3>Moderation</h3>
+            <div data-chart="Moderation"></div>
+        </section>
+
+        <section>
+            <h3>Wellness experts</h3>
+            <div data-chart="Wellness experts"></div>
+        </section>
+    </div>
+</section>
         </div>
     </main>
 </div>

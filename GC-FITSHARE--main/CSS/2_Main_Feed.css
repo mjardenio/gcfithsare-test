@@ -2057,6 +2057,10 @@ body.dark-mode #createPostModal .form-group textarea::placeholder {
     transition: var(--transition);
 }
 
+body.dark-mode .image-upload-section {
+    background: var(--light-bg);
+}
+
 .image-upload-section:hover {
     border-color: var(--primary-color);
     background: rgba(29, 209, 161, 0.05);

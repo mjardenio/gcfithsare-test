@@ -331,7 +331,8 @@ async function openNotificationsModal() {
                 comment: '<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/>',
                 comment_reply: '<path d="m9 17-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>',
                 follow: '<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6m3-3h-6"/>',
-                admin_flagged_post: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="M12 8v4m0 4h.01"/>'
+                admin_flagged_post: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="M12 8v4m0 4h.01"/>',
+                community_article: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>'
             };
             const iconPath = notificationIcons[n.type] || '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10 21h4"/>';
             const actionBtn = n.type === 'follow' && n.actor?.id
@@ -344,6 +345,9 @@ async function openNotificationsModal() {
             } else if (hasPost && n.type === 'post_like') {
                 jumpBtn = `<button type="button" class="btn-secondary notif-open-thread" data-post-id="${n.post_id}" data-comment-id="" data-open-post-only="1" style="padding:6px 10px;font-size:12px;">View post</button>`;
             }
+            const communityBtn = n.type === 'community_article'
+                ? `<button type="button" class="btn-secondary notif-open-community" style="padding:6px 10px;font-size:12px;">View in Community</button>`
+                : '';
             const isUnread = !n.is_read;
             return `
                 <div class="notif-card ${isUnread ? 'notif-unread' : 'notif-read'}">
@@ -356,7 +360,7 @@ async function openNotificationsModal() {
                         <small class="notif-time">${time}</small>
                     </div>
                     <div class="notif-card-actions">
-                        ${jumpBtn}${actionBtn}
+                        ${jumpBtn}${actionBtn}${communityBtn}
                     </div>
                 </div>`;
         }).join('');
@@ -393,6 +397,14 @@ async function openNotificationsModal() {
                 } else {
                     queueNotificationDeepLinkAndGoFeed(payload);
                 }
+            });
+        });
+
+        list.querySelectorAll('.notif-open-community').forEach((btn) => {
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                document.getElementById('notificationsModal')?.classList.add('hidden');
+                window.location.href = '/community';
             });
         });
 

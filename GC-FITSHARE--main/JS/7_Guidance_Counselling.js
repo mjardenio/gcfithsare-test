@@ -1,7 +1,7 @@
 /**
  * Guidance Counselling Scheduling Module
  * Handles appointment booking for users and management for admins
- */
+ */ 
 
 let supabase;
 let currentUser = null;

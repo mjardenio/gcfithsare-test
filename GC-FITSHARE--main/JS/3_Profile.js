@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * 3_Profile.js — USER PROFILE (own or others via ?user=uuid)
  * ═══════════════════════════════════════════════════════════════════════════ 
- *
+ * 
  * PURPOSE
  *   Profile data, edit modal, avatar upload, posts tab, bookmarks, follows, 
  *   expert endorsements on cards, comments on profile posts.

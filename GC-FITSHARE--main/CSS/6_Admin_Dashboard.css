@@ -6,7 +6,7 @@
     --text-primary: #2d3436; 
     --text-secondary: #636e72;
     --border-color: #dfe6e9; 
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
     --transition: all 0.3s ease;
 }
 
@@ -1504,3 +1504,58 @@ textarea.expert-decision-note:focus {
 #moderationCounts strong { font-size: 1.7rem; line-height: 1.2; }
 #moderationCounts div { padding: 14px; }
 .tool-exports { margin: 0 0 15px; }
+
+#directoryList {height:min(48vh,360px); scrollbar-gutter:stable;}
+#directoryModal .modal-content {max-height:92dvh;overflow:auto;}
+.dashboard-report:has(#reportTitle) {display:grid;grid-template-columns:minmax(160px,.75fr) minmax(230px,1.25fr) minmax(240px,1fr);gap:20px;align-items:start;}
+.dashboard-report .report-heading,.dashboard-report .report-charts {display:contents;}
+.report-heading .report-actions {grid-column:1;grid-row:2;justify-content:flex-start;}
+.report-charts > section {grid-row:1 / span 2;}
+.report-charts > section:first-child {grid-column:2;}
+.report-charts > section:last-child {grid-column:3;}
+.student-report {margin-top:18px;}
+.student-head {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.student-head h2 {margin:0;}
+#studentRange {color:var(--text-secondary);margin:5px 0;}
+.student-charts {display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:12px 0 22px;}
+.student-charts section,.rank-scroll {border:1px solid var(--border-color);border-radius:10px;padding:16px;min-width:0;}
+.student-charts h3 {margin:0 0 12px;}
+.dept-row {display:grid;grid-template-columns:6em 1fr 3em;align-items:center;gap:10px;width:100%;padding:8px 2px;background:none;border:0;color:inherit;text-align:left;font:inherit;cursor:pointer;}
+.dept-row strong {text-align:right;}
+.dept-row:hover,.dept-row[aria-expanded=true] {color:var(--primary-color);}
+.dept-track {height:9px;border-radius:6px;background:var(--border-color);overflow:hidden;}
+.dept-track i {display:block;height:100%;background:#12b99b;border-radius:6px;}
+#student-source .dept-track i {background:#5997e4;}
+.course-detail {padding:8px 12px;border-left:3px solid var(--primary-color);font-size:.92rem;}
+.rank-scroll {overflow:auto;max-height:300px;padding:0;}
+.rank-scroll table {width:100%;border-collapse:collapse;text-align:left;}
+.rank-scroll :is(th,td) {padding:9px 14px;border-bottom:1px solid var(--border-color);}
+.rank-scroll th {background:var(--card-bg);position:sticky;top:0;}
+@container (max-width: 800px) {
+ .dashboard-report:has(#reportTitle),.student-charts {display:block;}
+ .report-heading .report-actions,.report-charts > section,.student-charts section {margin-top:15px;}
+}
+
+.report-heading > div:first-child {grid-column:1;grid-row:1;}
+
+.analytics-fold {min-width:0;}
+.analytics-fold summary {cursor:pointer;background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:18px 24px;font-size:1.25rem;font-weight:700;color:var(--text-primary);}
+.analytics-fold[open] summary {margin-bottom:12px;}
+.department-plot {display:grid;grid-template-columns:max-content 1fr;gap:9px;margin:32px 0 48px;}
+.axis-ticks {display:flex;flex-direction:column;justify-content:space-between;font-size:.75rem;color:var(--text-secondary);margin:-.55em 0;}
+.dept-columns {height:156px;display:flex;align-items:stretch;border-bottom:1px solid var(--text-secondary);background-image:linear-gradient(to bottom,var(--border-color) 1px,transparent 1px);}
+.dept-column {flex:1;min-width:0;position:relative;align-items:flex-end;justify-content:center;display:flex;border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:0;}
+.dept-column i {position:relative;width:min(55%,38px);background:#11af99;border-radius:4px 4px 0 0;}
+#student-source .dept-column i {background:#5997e4;}
+.dept-column b {position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:600 .9rem system-ui;}
+.dept-column span {position:absolute;top:100%;margin-top:5px;max-width:100%;font-size:.78rem;overflow-wrap:anywhere;}
+.dept-column:hover,.dept-column[aria-expanded=true] {background:color-mix(in srgb,var(--text-primary) 7%,transparent);}
+#reportedAccountsModal .modal-content {max-height:92dvh;display:flex;flex-direction:column;}
+#reportedAccountsModal .modal-body {display:flex;flex-direction:column;min-height:0;overflow:auto;}
+#reportedAccountsList {overflow-y:auto;min-height:0;max-height:48dvh;overscroll-behavior:contain;}
+
+.student-period {display:flex;flex-wrap:wrap;gap:3px;border:1px solid var(--border-color);border-radius:10px;padding:4px;min-width:0;}
+.student-period legend {color:var(--text-secondary);padding:0 5px;font-size:.82rem;}
+.report-actions .student-period button {border-color:transparent;padding:6px 10px;}
+.report-actions .student-period button[aria-pressed=true] {background:#087565;color:#fff;font-weight:700;}
+.student-period button:focus-visible {outline:2px solid var(--primary-color);outline-offset:1px;}

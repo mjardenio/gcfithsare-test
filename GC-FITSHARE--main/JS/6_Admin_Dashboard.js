@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * 6_Admin_Dashboard.js — ADMIN CONSOLE (moderation, experts, flags)
+ * 6_Admin_Dashboard.js — ADMIN CONSOLE (moderation, experts, flags) 
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * PURPOSE
@@ -269,6 +269,7 @@ async function saveFlagStatusFromModal() {
         showAppAlert('Update failed', error.message || 'Could not save status', 'error');
         return;
     }
+    recordActivityAction('Post report marked '+status);
     flagReviewContext.row.status = status;
     showAppAlert('Saved', 'Flag status updated.', 'success');
     await loadAdminDashboard();
@@ -295,6 +296,7 @@ async function deletePostFromModal() {
     if (!proceed) return;
     try {
         await adminDeletePostById(flagReviewContext.post.id);
+        recordActivityAction('Post deleted');
         showAppAlert('Deleted', 'The post was removed.', 'success');
         await loadAdminDashboard();
         closeFlagReviewModal();
@@ -321,6 +323,7 @@ async function suspendAuthorFromModal() {
         showAppAlert('Suspend failed', error.message || 'Check database column suspended_until (see SQL/004_admin_moderation.sql).', 'error');
         return;
     }
+    recordActivityAction('Posting suspended');
     showAppAlert('Suspended', `User cannot create new posts until ${until.toLocaleString()}.`, 'success');
     await openFlagReviewModal(flagReviewContext.row.id);
 }
@@ -351,6 +354,7 @@ async function banAuthorFromModal() {
         showAppAlert('Ban failed', error.message || String(error), 'error');
         return;
     }
+    recordActivityAction('Posting ban applied');
     showAppAlert('Banned', 'User is blocked from creating new posts.', 'success');
     await openFlagReviewModal(flagReviewContext.row.id);
 }
@@ -381,6 +385,7 @@ async function liftAuthorFromModal() {
         showAppAlert('Update failed', error.message || String(error), 'error');
         return;
     }
+    recordActivityAction('Posting suspension lifted');
     showAppAlert('OK', 'User may create posts again (if no other blocks apply).', 'success');
     await openFlagReviewModal(flagReviewContext.row.id);
 }
@@ -538,6 +543,7 @@ async function finalizeExpertApplication(appId, approved) {
             throw uErr;
         }
 
+        recordActivityAction(approved ? 'Expert application approved' : 'Expert application rejected');
         const message = buildExpertDecisionNotificationMessage(approved, noteToApplicant);
 
         const { error: nErr } = await supabase.from('notifications').insert({
@@ -590,7 +596,7 @@ function setupFlagReviewModalEvents() {
     document.getElementById('banUserBtn')?.addEventListener('click', banAuthorFromModal);
     document.getElementById('liftSuspensionBtn')?.addEventListener('click', liftAuthorFromModal);
 
-    document.querySelector('.dashboard-container')?.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
         const view = e.target.closest('.btn-expert-view');
         if (view) {
             openExpertReviewModal(view.getAttribute('data-app-id'));
@@ -640,6 +646,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!isAdmin) return;
         initUserDirectory();
         initActivityControls();
+        initStudentControls();
         initAdminExports();
         hideAdminAccessGate();
         applyAdminMobileSidebarDefaults();
@@ -1097,6 +1104,39 @@ let activityPage = 0;
 let clearedThrough = 0;
 let activityPartial = false;
 
+let liveEvents = [];
+let hiddenActivity = new Set();
+let lastClear = [];
+const localActions = new Map();
+
+function activityStorageKey() {
+    return 'gcfs:activity-view:' + currentUser.id;
+}
+
+function readActivityView() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(activityStorageKey()) || '{}');
+        hiddenActivity = new Set(saved.hidden || []);
+        lastClear = saved.lastClear || [];
+    } catch { /* Keep the current view if browser storage is unavailable. */ }
+}
+
+function saveActivityView() {
+    try {
+        localStorage.setItem(activityStorageKey(), JSON.stringify({hidden:[...hiddenActivity], lastClear}));
+    } catch { /* Clear and Undo also work in memory for this visit. */ }
+    activityPage = 0;
+    mergeActivity();
+}
+
+function recordActivityAction(label) {
+    const id = globalThis.crypto?.randomUUID?.() || Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    const event = {id, label, actor_id:currentUser.id, created_at:new Date().toISOString()};
+    localActions.set(event.id,event);
+    try { localStorage.setItem('gcfs:action:'+currentUser.id+':'+event.id, JSON.stringify(event)); } catch {}
+    refreshDashboardAnalytics();
+}
+
 function initActivityControls() {
     const storageKey = 'gcfs:cleared-activity:' + currentUser.id;
     try { clearedThrough = Number(localStorage.getItem(storageKey)) || 0; } catch {}
@@ -1107,32 +1147,57 @@ function initActivityControls() {
             document.getElementById('activityEvents').scrollTop = 0;
         });
     }
-    document.getElementById('clearActivity').addEventListener('click', () => {
-        if (!activity.length || !window.confirm('Clear the activity shown for your admin account on this browser? Source records are kept.')) return;
-        clearedThrough = activity[0].time;
-        try { localStorage.setItem(storageKey, String(clearedThrough)); } catch {}
-        activity = [];
-        activityPage = 0;
-        drawActivityPage();
+    readActivityView();
+    const actionPrefix='gcfs:action:'+currentUser.id+':';
+    try {
+        for (const key of Object.keys(localStorage).filter(key => key.startsWith(actionPrefix))) {
+            const event=JSON.parse(localStorage.getItem(key));
+            if (event) localActions.set(event.id,event);
+        }
+    } catch {}
+    window.addEventListener('storage', event => {
+        if (event.key === activityStorageKey()) { readActivityView(); mergeActivity(); }
+        if (event.key?.startsWith(actionPrefix) && event.newValue) {
+            const action=JSON.parse(event.newValue);
+            localActions.set(action.id,action);
+            refreshDashboardAnalytics();
+        }
     });
+    document.getElementById('clearActivity').onclick = () => {
+        const keys = activity.map(event => event.key).filter(key => !hiddenActivity.has(key));
+        if (!keys.length) return;
+        lastClear = keys;
+        for (const key of keys) hiddenActivity.add(key);
+        saveActivityView();
+    };
+    document.getElementById('undoActivity').onclick = () => {
+        for (const key of lastClear) hiddenActivity.delete(key);
+        lastClear = [];
+        saveActivityView();
+    };
 }
 
-function renderActivity(flags, accounts, blocks) {
-    const sources = [
-        ['Post reported', flags?.filter(row => !String(row.flagged_by || '').toLowerCase().includes('ai'))],
-        ['Account reported', accounts?.rows],
-        ['AI block attempt', blocks?.rows]
+function renderActivity(flags, accounts, blocks, actions, people) {
+    const actor=id=>people.get(id)?.full_name || (people.get(id)?.username && '@'+people.get(id).username);
+    liveEvents=[];
+    const sources=[
+        ['Post reported',flags?.filter(r=>!String(r.flagged_by||'').toLowerCase().includes('ai')),r=>actor(r.flagged_by)||'Reporter unavailable'],
+        ['Account reported',accounts?.rows,r=>actor(r.reporter_id)||'Reporter unavailable'],
+        ['AI block attempt',blocks?.rows,()=>'AI moderation'],
+        ['Admin action',actions,r=>actor(r.actor_id)||'Admin unavailable']
     ];
-    const anchor = activityPage > 0 && activity[activityPage * activityPageSize]?.key;
-    activity = [];
-    activityPartial = sources.some(([, rows]) => !rows);
-    for (const [label, rows] of sources) {
-        for (const row of rows || []) {
-            const time = Date.parse(row.created_at);
-            if (time > clearedThrough) activity.push({ label, time, key: label + ':' + row.id });
-        }
+    activityPartial=sources.some(([,rows])=>!rows);
+    for(const [kind,rows,who] of sources) for(const r of rows||[]) {
+        const time=Date.parse(r.created_at);
+        if(time>clearedThrough)liveEvents.push({key:kind+':'+r.id,time,label:(r.label||kind)+' · '+who(r)});
     }
-    activity.sort((a, b) => b.time - a.time || a.key.localeCompare(b.key));
+    mergeActivity();
+}
+
+function mergeActivity(){
+    const anchor = activityPage > 0 && activity[activityPage * activityPageSize]?.key;
+    activity = liveEvents.filter(event => !hiddenActivity.has(event.key))
+        .sort((a,b)=>b.time-a.time || a.key.localeCompare(b.key));
     if (anchor) {
         const index = activity.findIndex(event => event.key === anchor);
         if (index >= 0) activityPage = Math.floor(index / activityPageSize);
@@ -1161,6 +1226,7 @@ function drawActivityPage() {
     document.getElementById('previousActivity').disabled = activityPage === 0;
     document.getElementById('nextActivity').disabled = activityPage + 1 === pages;
     document.getElementById('clearActivity').disabled = !activity.length;
+    document.getElementById('undoActivity').hidden = !lastClear.length;
     const status = activity.length ? activity.length + ' recorded events' : 'No activity to display.';
     document.getElementById('activityStatus').textContent = activityPartial ? status + ' Some sources unavailable.' : status;
 }
@@ -1175,13 +1241,14 @@ async function refreshDashboardAnalytics() {
     try {
         const results = await Promise.allSettled([
             analyticsRows('expert_applications', 'id,user_id,status'),
-            analyticsRows('flagged_content', 'id,flagged_by,status,created_at'),
-            recentEvents('reported_accounts'),
+            analyticsRows('flagged_content', 'id,post_id,flagged_by,status,created_at'),
+            analyticsRows('reported_accounts','id,reported_user_id,reporter_id,created_at').then(rows=>({rows,count:rows.length})),
             recentEvents('ai_moderation_attempts'),
             analyticsCount(supabase.from('posts').select('id', { head: true, count: 'exact' }).eq('status', 'pending')),
-            analyticsCount(supabase.from('users').select('id', { head: true, count: 'exact' }).eq('is_expert', true))
+            analyticsCount(supabase.from('users').select('id', { head: true, count: 'exact' }).eq('is_expert', true)),
+            analyticsProfiles()
         ]);
-        const [apps, flags, accounts, blocks, pending, active] = results.map(result =>
+        const [apps, flags, accounts, blocks, pending, active, people] = results.map(result =>
             result.status === 'fulfilled' ? result.value : null);
         const outcomes = applicationOutcomes(apps);
         const approvedUsers = apps && new Set(apps.filter(isExpertApplicationDecidedApproved)
@@ -1210,7 +1277,8 @@ async function refreshDashboardAnalytics() {
         add('Wellness experts', 'Approved experts history', approvedUsers, 'expertHistoryBadge');
         for (const label of Object.keys(outcomeColors)) add('Expert applications', label, outcomes?.[label]);
         renderOutcomes(outcomes, apps?.length);
-        renderActivity(flags, accounts, blocks);
+        const userMap=await prepareStudentReports(flags,accounts?.rows || null,people);
+        renderActivity(flags,accounts,blocks,[...localActions.values()],userMap);
         const updated = new Date().toISOString();
         dashboardReport = { updated, metrics };
         const partial = results.some(result => result.status === 'rejected');
@@ -1602,7 +1670,7 @@ function setupRevokeExpertModalEvents() {
         if (e.target.id === 'revokeExpertModal') closeRevokeExpertModal();
     });
 
-    document.getElementById('adminDashboardRoot')?.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
         const btn = e.target.closest('.btn-revoke-expert');
         if (!btn) return;
         const uid = btn.getAttribute('data-user-id');
@@ -1688,6 +1756,7 @@ function setupRevokeExpertModalEvents() {
             if (nErr) console.warn('Revoke notification:', nErr.message || nErr);
 
             closeRevokeExpertModal();
+            recordActivityAction('Expert status removed');
             showAppAlert('Updated', 'Expert status removed and the user has been notified.', 'success');
             await loadAdminDashboard();
         } catch (err) {
@@ -1772,9 +1841,7 @@ async function purgeExpiredReportedAccounts() {
 
 async function loadReportedAccounts() {
     try {
-        const { data, error } = await supabase
-            .from('reported_accounts')
-            .select(`
+        const rows = await analyticsRows('reported_accounts', `
                 id, 
                 reported_user_id, 
                 reporter_id, 
@@ -1784,11 +1851,9 @@ async function loadReportedAccounts() {
                 created_at,
                 reported_user:users!reported_accounts_reported_user_id_fkey(full_name, username),
                 reporter:users!reported_accounts_reporter_id_fkey(full_name, username)
-            `)
-            .order('created_at', { ascending: false })
-            .limit(80);
-        if (error) throw error;
-        return { rows: data || [], errorMessage: '' };
+            `);
+        rows.sort((a,b)=>b.created_at.localeCompare(a.created_at) || String(a.id).localeCompare(String(b.id)));
+        return { rows, errorMessage:'' };
     } catch (err) {
         return { rows: [], errorMessage: err?.message || String(err) };
     }
@@ -1890,6 +1955,7 @@ async function approvePost(postId) {
 
         if (error) throw error;
 
+        recordActivityAction('Post approved');
         showAppAlert('Post Approved', 'The post has been approved and is now visible to users.', 'success');
         await loadAdminDashboard();
     } catch (err) {
@@ -1933,6 +1999,7 @@ async function rejectPost(postId) {
             }).then(() => {}, () => {});
         }
 
+        recordActivityAction('Post rejected');
         showAppAlert('Post Rejected', 'The post has been rejected and the student has been notified.', 'success');
         await loadAdminDashboard();
     } catch (err) {
@@ -1941,25 +2008,23 @@ async function rejectPost(postId) {
     }
 }
 
+let reportedAccountsPage = 0;
+
 function renderReportedAccountsSection(result) {
-    const container = document.getElementById('reportedAccountsList');
-    const sumEl = document.getElementById('summaryReportedAccounts');
-    if (!container) return;
-    
-    if (result?.errorMessage) {
-        if (sumEl) sumEl.textContent = '—';
-        container.innerHTML = `<p class="empty">Could not load reported accounts: ${escapeHtml(result.errorMessage)}</p>`;
-        return;
-    }
-    
+    const list = document.getElementById('reportedAccountsList');
     const rows = result?.rows || [];
-    if (sumEl) sumEl.textContent = `${rows.length} in list`;
+    const page = pageOfFive('accounts',rows,reportedAccountsPage,index=>{
+        reportedAccountsPage=index;
+        renderReportedAccountsSection(result);
+        list.scrollTop=0;
+    });
+    reportedAccountsPage=page.index;
+    list.replaceChildren();
     if (!rows.length) {
-        container.innerHTML = '<p class="empty">No reported accounts yet.</p>';
+        list.textContent=result?.errorMessage ? 'Could not load account reports. '+result.errorMessage : 'No reported accounts yet.';
         return;
     }
-    
-    container.innerHTML = rows
+    list.innerHTML = page.rows
         .map(
             (r) => `
             <article class="row">

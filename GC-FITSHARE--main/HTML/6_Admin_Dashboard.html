@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">  
-    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="referrer" content="strict-origin-when-cross-origin"> 
     <meta name="theme-color" content="#098084">
     <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
     <title>GC FitShare - Admin Dashboard</title>
@@ -119,6 +119,18 @@
 
             <!-- Admin Tool Cards -->
             <div class="admin-tools-grid">
+                <div class="admin-tool-card" data-tool="total-users">
+    <svg class="card-icon" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="10" cy="7" r="4"></circle>
+        <path d="M2 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2
+                 M16 3a4 4 0 0 1 0 8m3 3a6 6 0 0 1 3 5v2"></path>
+    </svg>
+    <h3>Total Users</h3>
+    <p>Search registered user profiles</p>
+    <span class="card-badge" id="directoryCount">—</span>
+    <button class="btn-open-tool" type="button">Open Tool</button>
+</div>
                 <!-- Pending Post Approvals -->
                 <div class="admin-tool-card" data-tool="pending-posts">
                     <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -181,21 +193,10 @@
                     <span class="card-badge" id="aiBlocksBadge">0</span>
                     <button class="btn-open-tool">Open Tool</button>
                 </div>
-                <div class="admin-tool-card" data-tool="total-users">
-    <svg class="card-icon" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="10" cy="7" r="4"></circle>
-        <path d="M2 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2
-                 M16 3a4 4 0 0 1 0 8m3 3a6 6 0 0 1 3 5v2"></path>
-    </svg>
-    <h3>Total Users</h3>
-    <p>Search registered user profiles</p>
-    <span class="card-badge" id="directoryCount">—</span>
-    <button class="btn-open-tool" type="button">Open Tool</button>
-</div>
+
                 
                 <aside class="moderation-activity" aria-labelledby="activityTitle">
-                    <div class="activity-heading"><h3 id="activityTitle">Recent moderation activity</h3><button type="button" id="clearActivity" disabled>Clear log</button></div>
+                    <div class="activity-heading"><h3 id="activityTitle">Recent moderation activity</h3><div><button type="button" id="undoActivity" hidden>Restore log</button> <button type="button" id="clearActivity" disabled>Clear log</button></div></div>
                     <p id="activityStatus">Loading activity…</p>
                     <ol id="activityEvents" tabindex="0" aria-label="Moderation events"></ol>
                     <nav class="activity-pages" aria-label="Activity pages">
@@ -205,10 +206,11 @@
                     </nav>
                 </aside>
             </div>
-            <section class="dashboard-report" aria-labelledby="reportTitle">
+            <details class="analytics-fold"><summary>Dashboard analytics</summary>
+<section class="dashboard-report" aria-labelledby="reportTitle">
     <header class="report-heading">
         <div>
-            <h2 id="reportTitle">Dashboard analytics</h2>
+            <h2 id="reportTitle">Dashboard overview</h2>
             <p id="reportStamp" role="status">Loading dashboard data…</p>
         </div>
 
@@ -234,6 +236,15 @@
         </section>
     </div>
 </section>
+<section class="dashboard-report student-report" aria-labelledby="studentTitle">
+<header class="student-head"><div><h2 id="studentTitle">Student reports by department</h2>
+<p id="studentRange" role="status">Loading student reports…</p></div>
+<div class="report-actions"><fieldset class="student-period"><legend>Period</legend><button type="button" data-student-period="week" aria-pressed="true">This week</button><button type="button" data-student-period="month" aria-pressed="false">This month</button><button type="button" data-student-period="all" aria-pressed="false">All time</button></fieldset>
+<button id="studentPdf" disabled>Download PDF</button></div></header>
+<p class="analytics-caption">Select a department to see its courses.</p>
+<div class="student-charts"><section id="student-target"></section><section id="student-source"></section></div>
+<h3>Most reported users</h3><div class="rank-scroll"><table><thead><tr><th>User</th><th>Department</th><th>Course</th><th>Reports</th></tr></thead><tbody id="studentRanks"></tbody></table></div><nav class="activity-pages" aria-label="Most reported users pages"><button id="rankPrev" type="button" disabled>Previous</button><span id="rankPage" role="status">Page 1 of 1</span><button id="rankNext" type="button" disabled>Next</button></nav>
+</section></details>
         </div>
     </main>
 </div>
@@ -359,8 +370,7 @@
             <button class="modal-close" data-close-modal="reportedAccountsModal">&times;</button>
         </div>
         <div class="modal-body">
-            <p class="panel-hint">Reports about a <strong>user</strong> (not a specific post). Requires table <code>reported_accounts</code> — run <code>SQL/013_reported_accounts.sql</code> in Supabase if this list fails to load.</p>
-            <div id="reportedAccountsList" class="rows"></div>
+            <div id="reportedAccountsList" class="rows" tabindex="0" aria-label="Account reports"></div><nav class="activity-pages" aria-label="Reported account pages"><button id="accountsPrev" type="button" disabled>Previous</button><span id="accountsPage" role="status">Page 1 of 1</span><button id="accountsNext" type="button" disabled>Next</button></nav>
         </div>
     </div>
 </div>
@@ -514,6 +524,7 @@
 <script src="/JS/0_Alerts.js"></script>
 <script src="/JS/0_Footer.js"></script>
 <script src="/JS/6_Admin_Reports.js"></script>
+<script src="/JS/6_Student_Reports.js"></script>
 <script src="/JS/6_Admin_Dashboard.js"></script>
 </body>
 </html>

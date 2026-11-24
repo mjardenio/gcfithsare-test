@@ -223,6 +223,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase    = getSupabaseClient();
     currentUser = await checkUserAuthentication();
     if (currentUser) {
+        // Keep the edit modal outside the profile section's overflow clipping.
+        const editProfileModal = document.getElementById('editProfileModal');
+        if (editProfileModal) document.body.appendChild(editProfileModal);
         viewedUserId = getViewedUserIdFromUrl() || currentUser.id;
         isOwnProfile = viewedUserId === currentUser.id;
         applyProfileViewMode();
@@ -866,6 +869,17 @@ async function loadUserPosts() {
 
 // ─── Attach Event Listeners to Post Cards ─────────────────────────────────────
 function attachPostCardListeners() {
+    document.querySelectorAll('.post-card').forEach((card) => {
+        if (card.dataset.detailClickBound === '1') return;
+        card.dataset.detailClickBound = '1';
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('button, a, input, textarea, select, .post-comments, .menu-dropdown')) return;
+            const postId = card.getAttribute('data-post-id');
+            if (postId) void openProfilePostDetail(postId);
+        });
+    });
+
     // Delete buttons
     document.querySelectorAll('.delete-post-btn').forEach(btn => {
         btn.removeEventListener('click', handleDeleteClick);
@@ -975,26 +989,21 @@ function handleDeleteClick(e) {
 function handleReadMoreClick(e) {
     const postCard = this.closest('.post-card');
     const postId = postCard.getAttribute('data-post-id');
-    const title = postCard.querySelector('.post-title')?.textContent || '';
-    const textEl = postCard.querySelector('.post-body') || postCard.querySelector('.post-text');
-    let fullBody = '';
-    
-    // Get the stored body from the post card's data
-    if (textEl) {
-        fullBody = textEl.textContent.replace(/\.\.\.$/, ''); // Remove trailing dots if present
+    if (postId) void openProfilePostDetail(postId);
+}
+
+async function openProfilePostDetail(postId) {
+    try {
+        const { data, error } = await supabase
+            .from('posts')
+            .select('id, title, body')
+            .eq('id', postId)
+            .maybeSingle();
+        if (error) throw error;
+        if (data) viewFullPost(data.id, data.title, data.body);
+    } catch (error) {
+        console.error('Post detail error:', error);
     }
-    
-    // We need to fetch the full body since we only have the preview
-    supabase
-        .from('posts')
-        .select('body')
-        .eq('id', postId)
-        .single()
-        .then(({ data }) => {
-            if (data) {
-                viewFullPost(postId, title, data.body);
-            }
-        });
 }
 
 async function handleToggleCommentsClick() {
@@ -2053,6 +2062,7 @@ function viewFullPost(postId, title, body) {
     const titleEl = document.getElementById('fullPostTitle');
     const bodyEl = document.getElementById('fullPostBody');
 
+    if (!modal || !titleEl || !bodyEl) return;
     titleEl.textContent = title || 'Untitled Post';
     bodyEl.textContent = body || '';
     modal.classList.add('active');

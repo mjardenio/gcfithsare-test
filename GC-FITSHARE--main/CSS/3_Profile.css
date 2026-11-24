@@ -2417,6 +2417,7 @@ img.post-avatar.post-avatar-img {
     width: 14px;
     height: 14px;
     margin: 0 6px 0 0;
+    padding: 0;
     border: 1.5px solid var(--text-secondary);
     border-radius: 3px;
     background: var(--light-bg);

@@ -3432,3 +3432,64 @@ body.dark-mode .comment-replies-cluster[data-nesting-depth="1"] { background: rg
   }
   .main-content > .top-bar .top-bar-spacer { display: none; }
 }
+
+/* Keep the post action label and icon centered as a single button group. */
+.create-post-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1.2;
+}
+
+.create-post-btn > svg {
+    display: block !important;
+    flex: 0 0 16px;
+    margin: 0 !important;
+}
+
+/* Category filters use the same palette as the badges shown on feed posts. */
+.category-btn[data-category="all"] {
+    --category-color: var(--secondary-color);
+    --category-ink: #ffffff;
+    --category-hover: rgba(9, 132, 227, 0.12);
+    --category-shadow: rgba(9, 132, 227, 0.3);
+}
+.category-btn[data-category="nutrition"] {
+    --category-color: #FF6B6B;
+    --category-ink: #542020;
+    --category-hover: rgba(255, 107, 107, 0.14);
+    --category-shadow: rgba(255, 107, 107, 0.24);
+}
+.category-btn[data-category="fitness"] {
+    --category-color: #4ECDC4;
+    --category-ink: #173f3c;
+    --category-hover: rgba(78, 205, 196, 0.14);
+    --category-shadow: rgba(78, 205, 196, 0.24);
+}
+.category-btn[data-category="mental_wellness"] {
+    --category-color: #95E1D3;
+    --category-ink: #254a43;
+    --category-hover: rgba(149, 225, 211, 0.14);
+    --category-shadow: rgba(149, 225, 211, 0.22);
+}
+.category-btn[data-category="productivity"] {
+    --category-color: #FFE66D;
+    --category-ink: #554600;
+    --category-hover: rgba(255, 230, 109, 0.14);
+    --category-shadow: rgba(255, 230, 109, 0.22);
+}
+
+.category-btn[data-category] {
+    color: var(--category-color);
+    border-color: var(--category-color);
+}
+.category-btn[data-category]:hover {
+    background: var(--category-hover);
+}
+.category-btn[data-category].active {
+    background: var(--category-color);
+    border-color: var(--category-color);
+    color: var(--category-ink);
+    box-shadow: 0 4px 12px var(--category-shadow);
+}

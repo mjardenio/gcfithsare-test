@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">  
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#098084">
     <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
@@ -111,6 +111,7 @@
                 </svg>
             </button>
             <h1 class="page-title">Admin Dashboard</h1>
+            <div class="top-bar-spacer"></div>
         </div>
 
         <div class="dashboard-container" id="adminDashboardRoot">
@@ -180,6 +181,29 @@
                     <span class="card-badge" id="aiBlocksBadge">0</span>
                     <button class="btn-open-tool">Open Tool</button>
                 </div>
+                <div class="admin-tool-card" data-tool="total-users">
+    <svg class="card-icon" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="10" cy="7" r="4"></circle>
+        <path d="M2 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2
+                 M16 3a4 4 0 0 1 0 8m3 3a6 6 0 0 1 3 5v2"></path>
+    </svg>
+    <h3>Total Users</h3>
+    <p>Search registered user profiles</p>
+    <span class="card-badge" id="directoryCount">—</span>
+    <button class="btn-open-tool" type="button">Open Tool</button>
+</div>
+                
+                <aside class="moderation-activity" aria-labelledby="activityTitle">
+                    <div class="activity-heading"><h3 id="activityTitle">Recent moderation activity</h3><button type="button" id="clearActivity" disabled>Clear log</button></div>
+                    <p id="activityStatus">Loading activity…</p>
+                    <ol id="activityEvents" tabindex="0" aria-label="Moderation events"></ol>
+                    <nav class="activity-pages" aria-label="Activity pages">
+                        <button type="button" id="previousActivity" disabled>Previous</button>
+                        <span id="activityPage" role="status">Page 1 of 1</span>
+                        <button type="button" id="nextActivity" disabled>Next</button>
+                    </nav>
+                </aside>
             </div>
             <section class="dashboard-report" aria-labelledby="reportTitle">
     <header class="report-heading">
@@ -191,18 +215,22 @@
         <div class="report-actions">
             <button type="button" data-report-format="csv" disabled>Download CSV</button>
             <button type="button" data-report-format="pdf" disabled>Download PDF</button>
+            <button type="button" data-report-format="xlsx" disabled>Download Excel</button>
         </div>
     </header>
 
     <div class="report-charts">
         <section>
-            <h3>Moderation</h3>
-            <div data-chart="Moderation"></div>
+            <h3>Expert application outcomes</h3>
+            <p class="analytics-caption">Share of all submitted applications</p>
+            <div class="outcomes-layout">
+                <div class="outcome-ring" aria-hidden="true"><strong id="outcomeTotal">—</strong></div>
+                <ul id="outcomeLegend" aria-label="Application outcomes"></ul>
+            </div>
         </section>
-
         <section>
-            <h3>Wellness experts</h3>
-            <div data-chart="Wellness experts"></div>
+            <h3>Moderation counts</h3>
+            <div id="moderationCounts"></div>
         </section>
     </div>
 </section>
@@ -225,6 +253,36 @@
 </div>
 
 <!-- Admin Tool Modals -->
+ <div id="directoryModal" class="modal hidden" role="dialog"
+     aria-modal="true" aria-labelledby="directoryTitle">
+  <div class="modal-content admin-tool-modal">
+    <div class="modal-header">
+      <h2 id="directoryTitle">Total Users</h2>
+      <button type="button" class="modal-close"
+              data-close-modal="directoryModal" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <label for="directorySearch">Search by name or username</label>
+      <input type="search" id="directorySearch" class="expert-search-input"
+             autocomplete="off">
+      <p id="directoryStatus" role="status"></p>
+      <ul id="directoryList" tabindex="0" aria-label="Registered users"></ul>
+    </div>
+  </div>
+</div>
+<dialog id="directoryProfileDialog" aria-labelledby="directoryProfileTitle">
+  <div class="modal-header">
+    <h2 id="directoryProfileTitle">User Profile</h2>
+    <form method="dialog">
+      <button type="submit" class="modal-close" aria-label="Close profile">
+        &times;
+      </button>
+    </form>
+  </div>
+
+  <iframe id="directoryProfileFrame" title="Selected user profile"></iframe>
+</dialog>
 <div id="pendingPostsModal" class="modal hidden">
     <div class="modal-content admin-tool-modal">
         <div class="modal-header">
@@ -455,6 +513,7 @@
 <script src="/JS/0_Utilities.js"></script>
 <script src="/JS/0_Alerts.js"></script>
 <script src="/JS/0_Footer.js"></script>
+<script src="/JS/6_Admin_Reports.js"></script>
 <script src="/JS/6_Admin_Dashboard.js"></script>
 </body>
 </html>

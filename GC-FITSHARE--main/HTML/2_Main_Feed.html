@@ -49,10 +49,6 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            <button class="sidebar-btn" id="adminVerifyBtn" title="Verify Admin Status">
-                <svg class="wrench-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-                <span>Admin Verify</span>
-            </button>
             <button class="sidebar-btn" id="darkModeToggle" title="Toggle Dark Mode" role="switch" aria-checked="false">
                 <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 <span>Dark Mode</span>
@@ -122,10 +118,10 @@
                         <button class="filter-tab" data-filter="recommended" title="Ranked from your lifestyle setup and optional story">For You</button>
                     </div>
                     <div class="category-filters">
-                        <button class="category-btn active" data-category="all">All</button>
-                        <button class="category-btn" data-category="nutrition"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 2v20M4.22 4.22l14.14 14.14M19.78 4.22l-14.14 14.14"></path></svg> Nutrition</button>
-                        <button class="category-btn" data-category="fitness"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v2H6z"></path><path d="M8 7v8M12 7v8M16 7v8"></path><path d="M8 16h8v2H8z"></path></svg> Fitness</button>
-                        <button class="category-btn" data-category="mental_wellness"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path d="M12 9v6M9 12h6"></path></svg> Mental Wellness</button>
+                        <button class="category-btn active" data-category="all"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> All</button>
+                        <button class="category-btn" data-category="nutrition"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7z"></path><path d="M12 2c0 0 2-3 5-2"></path></svg> Nutrition</button>
+                        <button class="category-btn" data-category="fitness"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"></path><path d="M6.5 17.5h11"></path><path d="M2 12h4M18 12h4"></path><rect x="4" y="9" width="2" height="6" rx="1"></rect><rect x="18" y="9" width="2" height="6" rx="1"></rect><rect x="6" y="6" width="2" height="12" rx="1"></rect><rect x="16" y="6" width="2" height="12" rx="1"></rect></svg> Fitness</button>
+                        <button class="category-btn" data-category="mental_wellness"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> Mental Wellness</button>
                         <button class="category-btn" data-category="productivity"><svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M9 7h6M9 11h6M9 15h3"></path></svg> Productivity</button>
                     </div>
                 </div>
@@ -160,21 +156,6 @@
             </div>
         </div>
     </main>
-</div>
-
-<!-- Admin Verification Modal -->
-<div id="adminVerificationModal" class="modal hidden">
-    <div class="modal-content admin-modal">
-        <div class="modal-header">
-            <h2>Admin Verification</h2>
-            <button class="modal-close" id="closeAdminModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div id="adminVerificationStatus" class="verification-status">
-                <p>Checking your admin status...</p>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Create Post Modal -->

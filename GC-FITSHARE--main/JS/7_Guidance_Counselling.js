@@ -72,6 +72,9 @@ async function initGuidanceCounselling() {
             document.getElementById('adminView').style.display = 'none';
         }
 
+        // Keep student and admin views synchronized in real time
+        subscribeToBookingsRealtime();
+
     } catch (error) {
         console.error('Error initializing guidance counselling:', error);
         if (typeof CustomAlert !== 'undefined') {
@@ -137,6 +140,9 @@ function setupEventListeners() {
         selectedTime = e.target.value;
         updateBookButton();
     });
+
+    // Topic selection
+    document.getElementById('sessionTopic')?.addEventListener('change', updateBookButton);
 
     // Email confirmation
     document.getElementById('emailConfirmation')?.addEventListener('change', updateBookButton);
@@ -281,20 +287,49 @@ async function loadAvailableTimeSlots(date) {
     }
 }
 
-// Format time for display
+// Format time for display (e.g. "9:00 AM")
 function formatTime(time) {
+    if (!time) return '';
     const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
+    const hour = parseInt(hours, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour > 12 ? hour - 12 : hour;
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
     return `${displayHour}:00 ${ampm}`;
+}
+
+// Format time slot range for display (e.g. "9:00 AM - 10:00 AM")
+function formatTimeSlot(time) {
+    if (!time) return '';
+    const hour = parseInt(time.split(':')[0], 10);
+    const endHour = hour + 1;
+    const startAmpm = hour >= 12 ? 'PM' : 'AM';
+    const endAmpm = endHour >= 12 ? 'PM' : 'AM';
+    const startDisp = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    const endDisp = endHour > 12 ? endHour - 12 : (endHour === 0 ? 12 : endHour);
+    return `${startDisp}:00 ${startAmpm} - ${endDisp}:00 ${endAmpm}`;
 }
 
 // ─── Booking slot management (student view) ─────────────────────────────────
 
-// Called when the student picks a date — blocks unavailable dates and
+// Called when the student picks a date — blocks unavailable dates/weekends and
 // refreshes which time slots are already taken.
 async function onSessionDateSelected(date) {
+    if (!date) return;
+
+    // Check if weekend
+    const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        if (typeof CustomAlert !== 'undefined') {
+            CustomAlert.show('Weekend unavailable', 'Counselling sessions are only available Monday through Friday. Please pick a weekday.', 'warning');
+        }
+        document.getElementById('sessionDate').value = '';
+        selectedDate = null;
+        selectedTime = null;
+        resetTimeSlotSelect();
+        updateBookButton();
+        return;
+    }
+
     if (unavailableDatesSet.has(date)) {
         if (typeof CustomAlert !== 'undefined') {
             CustomAlert.show('Date unavailable', 'That date has been marked unavailable for counselling. Please pick another date.', 'warning');
@@ -317,10 +352,11 @@ function resetTimeSlotSelect() {
     TIME_SLOTS.forEach(t => {
         const opt = document.createElement('option');
         opt.value = t;
-        opt.textContent = formatTime(t);
+        opt.textContent = formatTimeSlot(t);
         select.appendChild(opt);
     });
     selectedTime = '';
+    updateBookButton();
 }
 
 // Fetch taken slots for a date and mark them disabled in the select.
@@ -338,23 +374,65 @@ async function loadBookedSlotsForDate(date) {
                 const t = String(s.time_slot || '').slice(0, 5);
                 if (t) bookedSlotsForDate.add(t);
             });
+        } else {
+            // Direct query fallback if RPC is unavailable or returns an error
+            const { data: directSlots } = await supabase
+                .from('counselling_bookings')
+                .select('session_date, time_slot, status')
+                .eq('session_date', date)
+                .in('status', ['pending', 'scheduled']);
+            if (directSlots) {
+                directSlots.forEach(s => {
+                    const t = String(s.time_slot || '').slice(0, 5);
+                    if (t) bookedSlotsForDate.add(t);
+                });
+            }
         }
     } catch (e) {
-        console.warn('Could not load booked slots:', e);
+        console.warn('Could not load booked slots via RPC:', e);
+        try {
+            const { data: directSlots } = await supabase
+                .from('counselling_bookings')
+                .select('session_date, time_slot, status')
+                .eq('session_date', date)
+                .in('status', ['pending', 'scheduled']);
+            if (directSlots) {
+                directSlots.forEach(s => {
+                    const t = String(s.time_slot || '').slice(0, 5);
+                    if (t) bookedSlotsForDate.add(t);
+                });
+            }
+        } catch (_) {}
     }
 
     const select = document.getElementById('sessionTime');
     if (!select) return;
     select.innerHTML = '<option value="">Select a time slot</option>';
+    let availableCount = 0;
     TIME_SLOTS.forEach(t => {
         const booked = bookedSlotsForDate.has(t);
         const opt = document.createElement('option');
         opt.value = t;
-        opt.textContent = booked ? `${formatTime(t)} — Booked` : formatTime(t);
-        if (booked) opt.disabled = true;
+        opt.textContent = booked ? `${formatTimeSlot(t)} — Fully Booked` : formatTimeSlot(t);
+        if (booked) {
+            opt.disabled = true;
+        } else {
+            availableCount++;
+        }
         select.appendChild(opt);
     });
+
+    if (availableCount === 0) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "— All slots are booked for this date —";
+        opt.disabled = true;
+        opt.selected = true;
+        select.appendChild(opt);
+    }
+
     selectedTime = '';
+    updateBookButton();
 }
 
 // ─── Admin helpers ───────────────────────────────────────────────────────────
@@ -430,19 +508,49 @@ async function scheduleSession() {
 
     try {
         // Double-booking guard: re-check the slot is still free
-        const { data: bookedRows } = await supabase
-            .rpc('gcfs_booked_slots');
+        let clash = [];
+        try {
+            const { data: bookedRows, error: rpcErr } = await supabase
+                .rpc('gcfs_booked_slots');
 
-        const clash = (bookedRows || []).filter(r =>
-            String(r.session_date || '') === selectedDate &&
-            String(r.time_slot || '').slice(0, 5) === String(selectedTime || '').slice(0, 5)
-        );
+            if (!rpcErr && bookedRows) {
+                clash = (bookedRows || []).filter(r =>
+                    String(r.session_date || '') === selectedDate &&
+                    String(r.time_slot || '').slice(0, 5) === String(selectedTime || '').slice(0, 5)
+                );
+            } else {
+                const { data: directClash } = await supabase
+                    .from('counselling_bookings')
+                    .select('id')
+                    .eq('session_date', selectedDate)
+                    .eq('time_slot', selectedTime)
+                    .in('status', ['pending', 'scheduled'])
+                    .limit(1);
+                if (directClash && directClash.length > 0) clash = directClash;
+            }
+        } catch (_) {}
 
         if (clash.length > 0) {
             CustomAlert.show('Slot no longer available', 'Someone else just booked that time slot. Please pick another time.', 'warning');
             await loadBookedSlotsForDate(selectedDate);
             return;
         }
+
+        // Prevent duplicate bookings by the same student on the same date
+        try {
+            const { data: userExisting } = await supabase
+                .from('counselling_bookings')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .eq('session_date', selectedDate)
+                .in('status', ['pending', 'scheduled'])
+                .limit(1);
+
+            if (userExisting && userExisting.length > 0) {
+                CustomAlert.show('Already booked', 'You already have an appointment scheduled or pending for this date. Please choose a different date.', 'warning');
+                return;
+            }
+        } catch (_) {}
 
         const sessionData = {
             user_id: currentUser.id,
@@ -812,16 +920,6 @@ async function adminApproveBooking(bookingId) {
             .eq('id', bookingId);
         if (error) throw error;
 
-        // Mark the session date as unavailable so no one else can book it
-        const { error: unavailErr } = await supabase
-            .from('counselling_unavailable_dates')
-            .upsert(
-                { unavailable_date: booking.session_date, reason: 'Approved counselling session', created_by: currentUser?.id },
-                { onConflict: 'unavailable_date', ignoreDuplicates: true }
-            );
-        if (unavailErr) console.warn('Could not mark date unavailable:', unavailErr.message);
-        unavailableDatesSet.add(String(booking.session_date));
-
         const dateLabel = new Date(booking.session_date + 'T00:00:00').toLocaleDateString('en-US', {
             weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
         });
@@ -1030,6 +1128,40 @@ function switchTab(tab) {
         loadAdminUnavailableDates();
     }
 }
+
+// Keep student and admin views synchronized in real time
+function subscribeToBookingsRealtime() {
+    try {
+        if (!supabase || typeof supabase.channel !== 'function') return;
+        supabase
+            .channel('counselling_bookings_changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'counselling_bookings' },
+                async () => {
+                    if (isAdmin) {
+                        await loadAdminBookings();
+                    } else {
+                        await loadUserSessions();
+                        if (selectedDate) {
+                            await loadBookedSlotsForDate(selectedDate);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+    } catch (e) {
+        console.warn('Realtime subscription skipped:', e);
+    }
+}
+
+// Global functions for inline action buttons
+window.copyBookingDetails = copyBookingDetails;
+window.adminApproveBooking = adminApproveBooking;
+window.adminRejectBooking = adminRejectBooking;
+window.adminCancelBooking = adminCancelBooking;
+window.adminCompleteBooking = adminCompleteBooking;
+window.cancelSession = cancelSession;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initGuidanceCounselling);

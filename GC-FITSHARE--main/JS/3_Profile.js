@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════════════ 
  *
  * PURPOSE
- *   Profile data, edit modal, avatar upload, posts tab, bookmarks, follows,
+ *   Profile data, edit modal, avatar upload, posts tab, bookmarks, follows, 
  *   expert endorsements on cards, comments on profile posts.
  *
  * DEPENDS ON
@@ -17,6 +17,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+
+if (new URLSearchParams(window.location.search).get('view') === 'directory') {
+  document.documentElement.classList.add('directory-profile-view');
+}
 let supabase;
 let currentUser  = null;
 let userProfile  = null;
@@ -654,7 +658,16 @@ function displayUserProfile() {
 
     const expertRoleEl = document.getElementById('profileExpertRoleLabel');
     if (expertRoleEl) {
-        expertRoleEl.textContent = userProfile.is_expert ? 'Verified Expert' : 'Student';
+        if (userProfile.is_admin) {
+            expertRoleEl.textContent = 'Admin';
+            expertRoleEl.className = 'profile-expert-role-label role-admin';
+        } else if (userProfile.is_expert) {
+            expertRoleEl.textContent = 'Verified Expert';
+            expertRoleEl.className = 'profile-expert-role-label role-expert';
+        } else {
+            expertRoleEl.textContent = 'Student';
+            expertRoleEl.className = 'profile-expert-role-label role-student';
+        }
         expertRoleEl.hidden = false;
     }
 

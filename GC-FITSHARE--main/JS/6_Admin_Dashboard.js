@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * PURPOSE
- *   Gate access via public.admins + users.is_admin; expert applications; 
+ *   Gate access via public.admins + users.is_admin; expert applications;   
  *   user-reported flags; AI moderation summary; suspend/ban; revoke expert.
  *
  * DEPENDS ON
@@ -617,11 +617,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize admin tool cards
     try {
         initAdminToolCards();
-                document.querySelectorAll('[data-report-format]').forEach(button => {
-            button.addEventListener('click', () => {
-                downloadDashboardReport(button.dataset.reportFormat);
-            });
-        });
     } catch (error) {
         console.warn('Admin tool cards initialization failed:', error);
     }
@@ -643,7 +638,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const isAdmin = await ensureAdminAccess();
         if (!isAdmin) return;
-
+        initUserDirectory();
+        initActivityControls();
+        initAdminExports();
         hideAdminAccessGate();
         applyAdminMobileSidebarDefaults();
         window.addEventListener('resize', syncAdminSidebarDesktopBreakpoint);
@@ -812,6 +809,7 @@ function renderAiBlockAttemptsList(rows) {
 // ─── Admin Tool Cards & Modals ───────────────────────────────────────────────
 
 const toolModalMap = {
+    'total-users': 'directoryModal',
     'pending-posts': 'pendingPostsModal',
     'expert-apps': 'expertAppsModal',
     'active-experts': 'activeExpertsModal',
@@ -820,7 +818,124 @@ const toolModalMap = {
     'reported-accounts': 'reportedAccountsModal',
     'ai-blocks': 'aiBlocksModal'
 };
+function initUserDirectory() {
+  const card = document.querySelector('[data-tool="total-users"]');
+  const badge = document.getElementById('directoryCount');
+  const search = document.getElementById('directorySearch');
+  const status = document.getElementById('directoryStatus');
+  const list = document.getElementById('directoryList');
 
+  let profiles = [];
+  let loading = false;
+
+  function renderList() {
+    const term = search.value.trim().toLowerCase();
+    const matches = profiles.filter(user =>
+      [user.full_name, user.username].some(value =>
+        (value || '').toLowerCase().includes(term)
+      )
+    );
+
+    const items = document.createDocumentFragment();
+      for (const user of matches) {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      const name = user.full_name?.trim() || 'Unnamed user';
+      const username = user.username?.trim();
+
+      button.type = 'button';
+      button.className = 'directory-user-button';
+      button.setAttribute('aria-haspopup', 'dialog');
+      const roleLabel = user.is_admin ? 'Admin' : (user.is_expert ? 'Verified Expert' : 'Student');
+      button.textContent = username ? `${name} (@${username}) • ${roleLabel}` : `${name} • ${roleLabel}`;
+
+            button.addEventListener('click', () => {
+        const dialog = document.getElementById('directoryProfileDialog');
+        const frame = document.getElementById('directoryProfileFrame');
+        const url = new URL('/HTML/3_Profile.html', window.location.origin);
+
+        url.searchParams.set('user', user.id);
+        url.searchParams.set('view', 'directory');
+
+        frame.title = `Profile of ${name}`;
+        frame.src = url.href;
+        dialog.showModal();
+      });
+
+      item.append(button);
+      items.append(item);
+    }
+
+    list.replaceChildren(items);
+    status.textContent = term
+      ? `${matches.length} of ${profiles.length} users match your search.`
+      : `${profiles.length} registered users.`;
+  }
+
+  async function loadList() {
+    if (loading) return;
+    loading = true;
+    search.value = '';
+    search.disabled = true;
+    list.replaceChildren();
+    status.textContent = 'Loading users…';
+
+    try {
+      let adminIds = new Set();
+      try {
+        const { data: admList } = await supabase.from('admins').select('user_id');
+        if (admList) admList.forEach(a => { if (a.user_id) adminIds.add(a.user_id); });
+      } catch (_) {}
+
+      const users = [];
+      let lastId = null;
+
+      while (true) {
+        let query = supabase.from('users')
+          .select('id, full_name, username, is_expert, is_admin')
+          .order('id', { ascending: true })
+          .limit(500);
+
+        if (lastId !== null) query = query.gt('id', lastId);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        if (!data.length) break;
+
+        for (const u of data) {
+          u.is_admin = !!u.is_admin || adminIds.has(u.id);
+        }
+        users.push(...data);
+        lastId = data[data.length - 1].id;
+      }
+
+      profiles = users.sort((a, b) =>
+        (a.full_name || a.username || '').localeCompare(b.full_name || b.username || '')
+      );
+
+      badge.textContent = String(profiles.length);
+      renderList();
+      search.disabled = false;
+    } catch (error) {
+      console.warn('User directory failed to load:', error);
+      status.textContent = 'Could not load users. Reopen the tool to retry.';
+    } finally {
+      loading = false;
+    }
+  }
+
+  search.disabled = true;
+  search.addEventListener('input', renderList);
+  card.addEventListener('click', loadList, { capture: true });
+
+  supabase.from('users')
+    .select('id', { count: 'exact', head: true })
+    .then(({ count, error }) => {
+      if (!error && count !== null && list.childElementCount === 0) {
+        badge.textContent = String(count);
+      }
+    });
+}
 function initAdminToolCards() {
     try {
         // Card click handlers
@@ -899,130 +1014,240 @@ function filterExperts(searchTerm) {
 }
 
 let dashboardReport;
+let analyticsRunning = false;
+let analyticsQueued = false;
+let analyticsStarted = false;
+const analyticsInterval = 30000;
+const outcomeColors = {
+    Approved: '#15b99b', Pending: '#e5a438', Rejected: '#df7078', Other: '#8396bb'
+};
 
-function showDashboardReport(metrics) {
-    const updated = new Date().toISOString();
-    dashboardReport = { updated, metrics };
-
-    const maximum = Math.max(1, ...metrics.map(metric => metric.count ?? 0));
-
-    for (const group of ['Moderation', 'Wellness experts']) {
-        const chart = document.querySelector('[data-chart="' + group + '"]');
-        chart.replaceChildren();
-
-        for (const { label, count, badge } of metrics.filter(metric => metric.group === group)) {
-            document.getElementById(badge).textContent = count ?? '—';
-
-            const row = document.createElement('div');
-            row.className = 'report-row';
-
-            const name = document.createElement('span');
-            name.textContent = label;
-
-            const value = document.createElement('strong');
-            value.textContent = count ?? 'Unavailable';
-
-            const track = document.createElement('div');
-            track.className = 'report-track';
-            track.setAttribute('aria-hidden', 'true');
-
-            const bar = document.createElement('div');
-            bar.style.width = (100 * (count ?? 0) / maximum) + '%';
-
-            track.append(bar);
-            row.append(name, value, track);
-            chart.append(row);
-        }
+// Read only the columns needed by analytics. Keyset pagination also works
+// when the server caps a response below the requested page size.
+async function analyticsRows(table, columns, filter = query => query) {
+    const rows = [];
+    let lastId = null;
+    while (true) {
+        let query = filter(supabase.from(table).select(columns)).order('id').limit(500);
+        if (lastId !== null) query = query.gt('id', lastId);
+        const { data, error } = await query;
+        if (error) throw error;
+        if (!data.length) return rows;
+        rows.push(...data);
+        lastId = data[data.length - 1].id;
     }
-
-    document.getElementById('reportStamp').textContent =
-        'Dashboard snapshot · ' + new Date(updated).toLocaleString();
-
-    document.querySelectorAll('[data-report-format]').forEach(button => {
-        button.disabled = false;
-    });
-}
-function makeDashboardPdf(report) {
-    const lines = [
-        'GC FitShare | Admin dashboard report',
-        report.updated,
-        'Scope: Current dashboard data',
-        ''
-    ];
-
-    for (const group of ['Moderation', 'Wellness experts']) {
-        lines.push(group);
-
-        for (const metric of report.metrics.filter(item => item.group === group)) {
-            lines.push(metric.label + ': ' + (metric.count ?? 'Unavailable'));
-        }
-
-        lines.push('');
-    }
-
-    // The report uses fixed English labels and an ISO timestamp.
-    const escapePdf = line => line.replace(/[\\()]/g, character => '\\' + character);
-    const commands = lines.map(line => '(' + escapePdf(line) + ') Tj T*').join('\n');
-    const stream = 'BT /F1 13 Tf 21 TL 48 780 Td\n' + commands + '\nET';
-
-    const objects = [
-        '<< /Type /Catalog /Pages 2 0 R >>',
-        '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-        '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] ' +
-            '/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
-        '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-        '<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream'
-    ];
-
-    let pdf = '%PDF-1.4\n';
-    const offsets = [];
-
-    objects.forEach((object, index) => {
-        offsets.push(pdf.length);
-        pdf += (index + 1) + ' 0 obj\n' + object + '\nendobj\n';
-    });
-
-    const start = pdf.length;
-    pdf += 'xref\n0 6\n0000000000 65535 f \n';
-
-    for (const offset of offsets) {
-        pdf += String(offset).padStart(10, '0') + ' 00000 n \n';
-    }
-
-    return pdf + 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + start + '\n%%EOF\n';
 }
 
-function downloadDashboardReport(format) {
-    if (!dashboardReport) return;
+async function analyticsCount(query) {
+    const { count, error } = await query;
+    if (error) throw error;
+    return count;
+}
 
-    const { updated, metrics } = dashboardReport;
-    let blob;
+async function recentEvents(table) {
+    const rows = await analyticsRows(table, 'id,created_at');
+    return { rows, count: rows.length };
+}
 
-    if (format === 'csv') {
-        const rows = [
-            ['Snapshot UTC', 'Category', 'Metric', 'Count'],
-            ...metrics.map(({ group, label, count }) => [
-                updated, group, label, count ?? 'Unavailable'
-            ])
-        ];
+function applicationOutcomes(rows) {
+    if (!rows) return null;
+    const counts = { Approved: 0, Pending: 0, Rejected: 0, Other: 0 };
+    for (const row of rows) {
+        const status = String(row.status || 'pending').trim().toLowerCase();
+        if (isExpertApplicationDecidedApproved(row)) counts.Approved++;
+        else if (status === 'pending') counts.Pending++;
+        else if (status === 'rejected') counts.Rejected++;
+        else counts.Other++;
+    }
+    return counts;
+}
 
-        const csv = rows.map(row =>
-            row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',')
-        ).join('\r\n');
-
-        blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
-    } else if (format === 'pdf') {
-        blob = new Blob([makeDashboardPdf(dashboardReport)], { type: 'application/pdf' });
-    } else {
+function renderOutcomes(counts, total) {
+    const legend = document.getElementById('outcomeLegend');
+    const ring = document.querySelector('.outcome-ring');
+    legend.replaceChildren();
+    ring.style.background = '';
+    document.getElementById('outcomeTotal').textContent = total ?? '—';
+    if (!total) {
+        const message = document.createElement('li');
+        message.textContent = total === 0 ? 'No applications yet.' : 'Application data unavailable.';
+        legend.append(message);
         return;
     }
+    const stops = [];
+    let accumulated = 0;
+    for (const [label, count] of Object.entries(counts)) {
+        if (label === 'Other' && !count) continue;
+        const start = accumulated / total * 100;
+        accumulated += count;
+        if (count) stops.push(outcomeColors[label] + ' ' + start + '% ' + accumulated / total * 100 + '%');
+        const entry = document.createElement('li');
+        const dot = document.createElement('i');
+        dot.style.background = outcomeColors[label];
+        entry.append(dot, label + ' · ' + count + ' of ' + total + ' (' +
+            (count / total * 100).toLocaleString(undefined, { maximumFractionDigits: 1 }) + '%)');
+        legend.append(entry);
+    }
+    ring.style.background = 'conic-gradient(' + stops.join(', ') + ')';
+}
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'GC-FitShare-Dashboard-' + updated.replace(/[:.]/g, '-') + '.' + format;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
+const activityPageSize = 8;
+let activity = [];
+let activityPage = 0;
+let clearedThrough = 0;
+let activityPartial = false;
+
+function initActivityControls() {
+    const storageKey = 'gcfs:cleared-activity:' + currentUser.id;
+    try { clearedThrough = Number(localStorage.getItem(storageKey)) || 0; } catch {}
+    for (const [id, offset] of [['previousActivity', -1], ['nextActivity', 1]]) {
+        document.getElementById(id).addEventListener('click', () => {
+            activityPage += offset;
+            drawActivityPage();
+            document.getElementById('activityEvents').scrollTop = 0;
+        });
+    }
+    document.getElementById('clearActivity').addEventListener('click', () => {
+        if (!activity.length || !window.confirm('Clear the activity shown for your admin account on this browser? Source records are kept.')) return;
+        clearedThrough = activity[0].time;
+        try { localStorage.setItem(storageKey, String(clearedThrough)); } catch {}
+        activity = [];
+        activityPage = 0;
+        drawActivityPage();
+    });
+}
+
+function renderActivity(flags, accounts, blocks) {
+    const sources = [
+        ['Post reported', flags?.filter(row => !String(row.flagged_by || '').toLowerCase().includes('ai'))],
+        ['Account reported', accounts?.rows],
+        ['AI block attempt', blocks?.rows]
+    ];
+    const anchor = activityPage > 0 && activity[activityPage * activityPageSize]?.key;
+    activity = [];
+    activityPartial = sources.some(([, rows]) => !rows);
+    for (const [label, rows] of sources) {
+        for (const row of rows || []) {
+            const time = Date.parse(row.created_at);
+            if (time > clearedThrough) activity.push({ label, time, key: label + ':' + row.id });
+        }
+    }
+    activity.sort((a, b) => b.time - a.time || a.key.localeCompare(b.key));
+    if (anchor) {
+        const index = activity.findIndex(event => event.key === anchor);
+        if (index >= 0) activityPage = Math.floor(index / activityPageSize);
+    }
+    drawActivityPage();
+}
+
+function drawActivityPage() {
+    const pages = Math.max(1, Math.ceil(activity.length / activityPageSize));
+    activityPage = Math.max(0, Math.min(activityPage, pages - 1));
+    const start = activityPage * activityPageSize;
+    const list = document.getElementById('activityEvents');
+    const scroll = list.scrollTop;
+    list.replaceChildren();
+    for (const event of activity.slice(start, start + activityPageSize)) {
+        const item = document.createElement('li');
+        const stamp = document.createElement('time');
+        const date = new Date(event.time);
+        stamp.dateTime = date.toISOString();
+        stamp.textContent = date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        item.append(event.label, stamp);
+        list.append(item);
+    }
+    list.scrollTop = scroll;
+    document.getElementById('activityPage').textContent = 'Page ' + (activityPage + 1) + ' of ' + pages;
+    document.getElementById('previousActivity').disabled = activityPage === 0;
+    document.getElementById('nextActivity').disabled = activityPage + 1 === pages;
+    document.getElementById('clearActivity').disabled = !activity.length;
+    const status = activity.length ? activity.length + ' recorded events' : 'No activity to display.';
+    document.getElementById('activityStatus').textContent = activityPartial ? status + ' Some sources unavailable.' : status;
+}
+
+async function refreshDashboardAnalytics() {
+    if (document.hidden) return;
+    if (analyticsRunning) {
+        analyticsQueued = true;
+        return;
+    }
+    analyticsRunning = true;
+    try {
+        const results = await Promise.allSettled([
+            analyticsRows('expert_applications', 'id,user_id,status'),
+            analyticsRows('flagged_content', 'id,flagged_by,status,created_at'),
+            recentEvents('reported_accounts'),
+            recentEvents('ai_moderation_attempts'),
+            analyticsCount(supabase.from('posts').select('id', { head: true, count: 'exact' }).eq('status', 'pending')),
+            analyticsCount(supabase.from('users').select('id', { head: true, count: 'exact' }).eq('is_expert', true))
+        ]);
+        const [apps, flags, accounts, blocks, pending, active] = results.map(result =>
+            result.status === 'fulfilled' ? result.value : null);
+        const outcomes = applicationOutcomes(apps);
+        const approvedUsers = apps && new Set(apps.filter(isExpertApplicationDecidedApproved)
+            .map(row => row.user_id || 'application:' + row.id)).size;
+        const metrics = [];
+        const boxes = document.getElementById('moderationCounts');
+        boxes.replaceChildren();
+        function add(group, label, count, badge) {
+            metrics.push({ group, label, count });
+            if (badge) document.getElementById(badge).textContent = count ?? (badge === 'reportedAccountsBadge' ? '0' : '—');
+            if (group !== 'Moderation') return;
+            const box = document.createElement('div');
+            const value = document.createElement('strong');
+            const caption = document.createElement('span');
+            value.textContent = count ?? 'Unavailable';
+            caption.textContent = label;
+            box.append(value, caption);
+            boxes.append(box);
+        }
+        add('Moderation', 'Pending post approvals', pending, 'pendingPostsBadge');
+        add('Moderation', 'User-reported posts', flags?.filter(isUserReportModerationQueueRow).length, 'reportsBadge');
+        add('Moderation', 'Reported accounts', accounts?.count, 'reportedAccountsBadge');
+        add('Moderation', 'AI block attempts', blocks?.count, 'aiBlocksBadge');
+        add('Wellness experts', 'Pending applications', outcomes?.Pending, 'expertAppsBadge');
+        add('Wellness experts', 'Active wellness experts', active, 'activeExpertsBadge');
+        add('Wellness experts', 'Approved experts history', approvedUsers, 'expertHistoryBadge');
+        for (const label of Object.keys(outcomeColors)) add('Expert applications', label, outcomes?.[label]);
+        renderOutcomes(outcomes, apps?.length);
+        renderActivity(flags, accounts, blocks);
+        const updated = new Date().toISOString();
+        dashboardReport = { updated, metrics };
+        const partial = results.some(result => result.status === 'rejected');
+        document.getElementById('reportStamp').textContent =
+            (partial ? 'Partial data · Last checked ' : 'Updated ') + new Date(updated).toLocaleTimeString() +
+            ' · Refreshes every 30 seconds';
+        document.querySelectorAll('[data-report-format]').forEach(button => { button.disabled = false; });
+    } finally {
+        analyticsRunning = false;
+        if (analyticsQueued) {
+            analyticsQueued = false;
+            refreshDashboardAnalytics();
+        }
+    }
+}
+
+function updateDashboardAnalytics() {
+    if (!analyticsStarted) {
+        analyticsStarted = true;
+        window.setInterval(refreshDashboardAnalytics, analyticsInterval);
+        document.addEventListener('visibilitychange', refreshDashboardAnalytics);
+        // Receive changes immediately for tables included in the project's
+        // Realtime publication. Polling covers disconnected/unpublished tables.
+        if (typeof supabase.channel === 'function') {
+            const channel = supabase.channel('admin-dashboard-analytics');
+            let timer;
+            const onChange = () => {
+                if (timer) return;
+                timer = setTimeout(() => { timer = null; refreshDashboardAnalytics(); }, 500);
+            };
+            for (const table of ['expert_applications', 'users', 'posts', 'reported_accounts', 'flagged_content', 'ai_moderation_attempts']) {
+                channel.on('postgres_changes', { event: '*', schema: 'public', table }, onChange);
+            }
+            channel.subscribe();
+        }
+    }
+    refreshDashboardAnalytics();
 }
 
 // ─── Orchestrate full dashboard refresh ──────────────────────────────────────
@@ -1033,7 +1258,7 @@ async function loadAdminDashboard() {
     await purgeExpiredUserReports();
     await purgeExpiredReportedAccounts();
 
-    const [applications, expertsResult, historyResult, flaggedResult, aiData, reportedAccountsResult, pendingPostsResult] =
+    const [, expertsResult, historyResult, flaggedResult, aiData, reportedAccountsResult, pendingPostsResult] =
         await Promise.all([
             loadExpertApplications(),
             loadApprovedExperts(),
@@ -1048,54 +1273,7 @@ async function loadAdminDashboard() {
     const userReported = flaggedRows.filter(isUserReportModerationQueueRow);
     const pendingPosts = pendingPostsResult?.rows || [];
 
-    const pendingApps = applications?.filter(app =>
-        String(app.status || 'pending').trim().toLowerCase() === 'pending'
-    ).length;
-
-    showDashboardReport([
-        {
-            group: 'Moderation',
-            label: 'Pending post approvals',
-            count: pendingPostsResult.errorMessage ? null : pendingPosts.length,
-            badge: 'pendingPostsBadge'
-        },
-        {
-            group: 'Moderation',
-            label: 'User-reported posts',
-            count: flaggedResult.errorMessage ? null : userReported.length,
-            badge: 'reportsBadge'
-        },
-        {
-            group: 'Moderation',
-            label: 'Reported accounts',
-            count: reportedAccountsResult.errorMessage ? null : reportedAccountsResult.rows.length,
-            badge: 'reportedAccountsBadge'
-        },
-        {
-            group: 'Moderation',
-            label: 'AI block attempts',
-            count: aiData.total,
-            badge: 'aiBlocksBadge'
-        },
-        {
-            group: 'Wellness experts',
-            label: 'Pending applications',
-            count: pendingApps,
-            badge: 'expertAppsBadge'
-        },
-        {
-            group: 'Wellness experts',
-            label: 'Active wellness experts',
-            count: expertsResult.errorMessage ? null : expertsResult.count,
-            badge: 'activeExpertsBadge'
-        },
-        {
-            group: 'Wellness experts',
-            label: 'Approved experts history',
-            count: historyResult.errorMessage ? null : historyResult.count,
-            badge: 'expertHistoryBadge'
-        }
-    ]);
+    updateDashboardAnalytics();
 
     renderAiBlockAttemptsList(aiData.rows);
     renderApprovedExpertsList(expertsResult);
@@ -1596,7 +1774,17 @@ async function loadReportedAccounts() {
     try {
         const { data, error } = await supabase
             .from('reported_accounts')
-            .select('id, reported_user_id, reporter_id, reason, details, status, created_at')
+            .select(`
+                id, 
+                reported_user_id, 
+                reporter_id, 
+                reason, 
+                details, 
+                status, 
+                created_at,
+                reported_user:users!reported_accounts_reported_user_id_fkey(full_name, username),
+                reporter:users!reported_accounts_reporter_id_fkey(full_name, username)
+            `)
             .order('created_at', { ascending: false })
             .limit(80);
         if (error) throw error;
@@ -1757,23 +1945,30 @@ function renderReportedAccountsSection(result) {
     const container = document.getElementById('reportedAccountsList');
     const sumEl = document.getElementById('summaryReportedAccounts');
     if (!container) return;
+    
     if (result?.errorMessage) {
         if (sumEl) sumEl.textContent = '—';
         container.innerHTML = `<p class="empty">Could not load reported accounts: ${escapeHtml(result.errorMessage)}</p>`;
         return;
     }
+    
     const rows = result?.rows || [];
     if (sumEl) sumEl.textContent = `${rows.length} in list`;
     if (!rows.length) {
         container.innerHTML = '<p class="empty">No reported accounts yet.</p>';
         return;
     }
+    
     container.innerHTML = rows
         .map(
             (r) => `
             <article class="row">
-                <p class="row-title">Reported user <code>${escapeHtml(r.reported_user_id)}</code></p>
-                <p class="row-meta">${escapeHtml(formatDate(r.created_at))} · Reporter: <code>${escapeHtml(r.reporter_id)}</code> · ${formatFlagStatusBadge(r.status)}</p>
+                <p class="row-title">Reported User: <strong>${escapeHtml(r.reported_user?.full_name || r.reported_user?.username || r.reported_user_id)}</strong></p>
+                <p class="row-meta">
+                    ${escapeHtml(formatDate(r.created_at))} 
+                    · <strong>Reported By:</strong> ${escapeHtml(r.reporter?.full_name || r.reporter?.username || r.reporter_id)} 
+                    · ${formatFlagStatusBadge(r.status)}
+                </p>
                 <p class="row-text"><strong>Reason:</strong> ${escapeHtml(r.reason || '—')}</p>
                 ${r.details ? `<p class="row-text"><strong>Details:</strong> ${escapeHtml(r.details)}</p>` : ''}
             </article>`

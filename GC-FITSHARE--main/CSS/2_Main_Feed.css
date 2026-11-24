@@ -1955,6 +1955,19 @@ body.dark-mode .comment-replies {
     box-shadow: 0 0 0 3px rgba(29, 209, 161, 0.1);
 }
 
+body.dark-mode #createPostModal .form-group input[type="text"],
+body.dark-mode #createPostModal .form-group textarea {
+    background-color: var(--light-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-mode #createPostModal .form-group input[type="text"]::placeholder,
+body.dark-mode #createPostModal .form-group textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 1;
+}
+
 #postTitle {
     min-height: 44px;
 }
@@ -2205,15 +2218,15 @@ body.dark-mode .comment-replies {
 }
 
 #reportPostModal .modal-actions #submitReportBtn {
-    background: var(--primary-color);
+    background: #e74c3c;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(29, 209, 161, 0.3);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 
 #reportPostModal .modal-actions #submitReportBtn:hover {
-    background: #00c896;
+    background: #c0392b;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(29, 209, 161, 0.4);
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
 }
 
 #reportPostModal .modal-actions #cancelReportBtn {

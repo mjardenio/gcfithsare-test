@@ -84,6 +84,7 @@ function mergeLoadedPostUser(post, postUser) {
             full_name: userProfile.full_name,
             username: userProfile.username,
             course: userProfile.course,
+            avatar_url: userProfile.avatar_url,
             is_expert: !!userProfile.is_expert,
             is_admin: !!userProfile.is_admin
         };
@@ -888,7 +889,7 @@ async function loadUserPosts() {
         for (const post of posts) {
             const { data: postUser } = await supabase
                 .from('users')
-                .select('id, full_name, username, course, is_expert, is_admin')
+                .select('id, full_name, username, course, avatar_url, is_expert, is_admin')
                 .eq('id', post.user_id)
                 .single();
             mergeLoadedPostUser(post, postUser);
@@ -1951,7 +1952,7 @@ async function loadBookmarkedPosts() {
             const post = b.posts;
             const { data: postUser } = await supabase
                 .from('users')
-                .select('id, full_name, username, course, is_expert, is_admin')
+                .select('id, full_name, username, course, avatar_url, is_expert, is_admin')
                 .eq('id', post.user_id)
                 .single();
             mergeLoadedPostUser(post, postUser);

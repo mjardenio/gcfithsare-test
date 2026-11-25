@@ -1652,6 +1652,46 @@ img.post-avatar.post-avatar-img {
     max-height: 85vh;
 }
 
+.full-post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.full-post-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 0 0 16px;
+}
+
+.full-post-text {
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.full-post-actions {
+    margin: 24px 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.full-post-actions .post-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .full-post-title {
     font-size: 20px;
     font-weight: 700;

@@ -700,14 +700,43 @@ function filterPostsBySearch(query) {
     const container = document.getElementById('postsContainer');
     if (!query) { displayPostsByFilter(currentFilter); return; }
 
-    const q = query.toLowerCase();
-    const filtered = allPosts.filter(post => {
-        // FIX: use post.body not post.content
-        return (post.title   || '').toLowerCase().includes(q)
-            || (post.body    || '').toLowerCase().includes(q)
-            || (post.user?.full_name || '').toLowerCase().includes(q)
-            || (post.hashtags || '').toLowerCase().includes(q);
-    });
+    const q = query.toLowerCase().trim();
+    const terms = q.match(/[a-z0-9]+/g)?.filter(term => term.length > 1) || [];
+    const categoryKeywords = {
+        fitness: ['fitness', 'workout', 'exercise', 'gym', 'training', 'cardio', 'strength', 'muscle', 'running'],
+        nutrition: ['nutrition', 'diet', 'meal', 'food', 'protein', 'calorie', 'healthy', 'eating'],
+        mental_wellness: ['mental', 'wellness', 'stress', 'anxiety', 'mindfulness', 'sleep', 'wellbeing'],
+        productivity: ['productivity', 'focus', 'study', 'habit', 'routine', 'planning', 'time management']
+    };
+    const relatedCategories = new Set(
+        Object.entries(categoryKeywords)
+            .filter(([, keywords]) => terms.some(term => keywords.some(keyword => keyword.includes(term) || term.includes(keyword))))
+            .map(([category]) => category)
+    );
+    const filtered = allPosts
+        .map(post => {
+            const categoryLabel = CATEGORY_META[post.category]?.label || post.category || '';
+            const fields = {
+                title: String(post.title || '').toLowerCase(),
+                body: String(post.body || '').toLowerCase(),
+                hashtags: String(post.hashtags || '').toLowerCase(),
+                category: categoryLabel.toLowerCase(),
+                author: `${post.user?.full_name || ''} ${post.user?.username || ''} ${post.user?.course || ''}`.toLowerCase()
+            };
+            let score = fields.title.includes(q) ? 20 : fields.body.includes(q) ? 12 : 0;
+            terms.forEach(term => {
+                if (fields.title.includes(term)) score += 8;
+                if (fields.hashtags.includes(term)) score += 7;
+                if (fields.category.includes(term)) score += 7;
+                if (fields.body.includes(term)) score += 3;
+                if (fields.author.includes(term)) score += 2;
+            });
+            if (relatedCategories.has(post.category)) score += 4;
+            return { post, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score || new Date(b.post.created_at) - new Date(a.post.created_at))
+        .map(({ post }) => post);
 
     container.innerHTML = '';
     if (!filtered.length) {

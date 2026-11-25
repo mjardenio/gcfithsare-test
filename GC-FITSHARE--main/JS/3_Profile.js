@@ -1294,7 +1294,7 @@ function buildPostAvatarHtml(user, initials) {
     if (url) {
         return `<img class="post-avatar post-avatar-img" src="${escapeHtml(url)}" alt="" width="45" height="45" loading="lazy" referrerpolicy="no-referrer">`;
     }
-    return `<div class="post-avatar">${escapeHtml(initials)}</div>`;
+    return `<div class="post-avatar post-avatar-fallback">${escapeHtml(initials)}</div>`;
 }
 
 function createPostCard(post, upvotes = 0, commentCount = 0, canDelete = false) {

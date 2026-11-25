@@ -23,16 +23,20 @@
       "destination": "/HTML/4_Expert_Application.html"
     },
     {
+      "source": "/guidance-counselling",
+      "destination": "/HTML/7_Guidance_Counselling.html"
+    },
+    {
+      "source": "/community",
+      "destination": "/HTML/8_Community.html"
+    },
+    {
       "source": "/info-support",
       "destination": "/HTML/5_Info_Support.html"
     },
     {
       "source": "/admin",
       "destination": "/HTML/6_Admin_Dashboard.html"
-    },
-    {
-      "source": "/guidance-counselling",
-      "destination": "/HTML/7_Guidance_Counselling.html"
     }
   ]
 }

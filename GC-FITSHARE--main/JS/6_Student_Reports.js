@@ -4,15 +4,15 @@ const departmentCourses = {
     CEAS: /\b(BEED|BSED|BPEd|BTLEd|BAComm|education|communication)\b/i,
     CHTM: /\b(BSHM|BSTM|BSHRM|hospitality management|tourism management|hotel and restaurant management)\b/i,
     CAHS: /\b(BSN|BSM|BSMLS|BSMT(?=\s+medical)|nursing|midwifery|medical laboratory science|medical technology)\b/i,
-    CBA: /\b(BSA|BSBA|BSAIS|BSMA|BSCA|accountancy|business administration|accounting information systems|customs administration|management accounting)\b/i
+    CBA: /\b(BSA|BSBA|BSAIS|BSMA|BSCA|accountancy|business administration|accounting information systems|customs administration|management accounting)\b/i 
 };
 const colleges = {
-    CCS:'College of Computer Studies', CEAS:'College of Education, Arts, and Sciences',
+    CCS:'College of Computer Studies', CEAS:'College of Education, Arts, and Sciences', 
     CHTM:'College of Hospitality and Tourism Management', CAHS:'College of Allied Health Studies',
     CBA:'College of Business and Accountancy'
 };
 const reportDate = new Intl.DateTimeFormat('en-PH',{timeZone:'Asia/Manila',year:'numeric',month:'short',day:'numeric'});
-const studentView = { reports:[], period:'week', drill:{}, page:0, warning:'', ready:false };
+const studentView = { reports:[], period:'week', drill:{}, warning:'', ready:false };
 function studentDepartment(person) {
     const normalize = value => String(value || '').replace(/[^a-z0-9]/gi,'').toLowerCase();
     const explicit = normalize(person?.department);
@@ -32,24 +32,18 @@ function periodStart(period,now) {
     const day = period === 'month' ? 1 : ph.getUTCDate() - (ph.getUTCDay()+6)%7;
     return Date.UTC(ph.getUTCFullYear(),ph.getUTCMonth(),day)-8*3600000;
 }
-function studentSummary(now=Date.now()) {
+function studentSummary(now=Date.now(), department="all") {
     const start = periodStart(studentView.period,now);
-    const rows = studentView.reports.filter(r => r.time >= start && r.time <= now);
+    const rows = studentView.reports.filter(r => r.time >= start && r.time <= now &&
+        (department === "all" || r.target.dept === department || r.source.dept === department));
     const earliest = rows.reduce((v,r)=>Math.min(v,r.time),Infinity);
     const first = Number.isFinite(start) ? start : earliest;
     const range = (Number.isFinite(first) ? reportDate.format(first)+' – ' : 'Through ')+reportDate.format(now)+' (PHT)';
-    const users = new Map();
-    for (const {target} of rows) {
-        if (!target.id) continue;
-        const row = users.get(target.id) || {...target,count:0};
-        row.count++;
-        users.set(target.id,row);
-    }
-    const ranked = [...users.values()].sort((a,b)=>b.count-a.count || a.name.localeCompare(b.name));
     function groups(side) {
-        const map = new Map(Object.keys(colleges).map(code=>[code,{code,count:0,courses:new Map()}]));
+        const map = new Map((department === "all" ? Object.keys(colleges) : [department]).map(code=>[code,{code,count:0,courses:new Map()}]));
         for (const row of rows) {
             const {dept,course}=row[side];
+            if (department !== "all" && dept !== department) continue;
             if (!map.has(dept)) map.set(dept,{code:dept,count:0,courses:new Map()});
             const group=map.get(dept);
             group.count++;
@@ -57,7 +51,7 @@ function studentSummary(now=Date.now()) {
         }
         return [...map.values()].sort((a,b)=>b.count-a.count || a.code.localeCompare(b.code));
     }
-    return {range,total:rows.length,ranked,target:groups('target'),source:groups('source')};
+    return {range,total:rows.length,target:groups('target'),source:groups('source')};
 }
 function studentElement(tag,text) {
     const el=document.createElement(tag);
@@ -89,7 +83,7 @@ function drawStudentReports() {
     document.getElementById('studentRange').textContent = studentView.ready
         ? s.range+' · '+s.total+' retained reports'+(studentView.warning?' · '+studentView.warning:'')
         : 'Report data unavailable.';
-    document.getElementById('studentPdf').disabled=!studentView.ready;
+    updateStudentExportButton();
     for (const side of Object.keys(chartNames)) {
         const panel=document.getElementById('student-'+side);
         panel.replaceChildren(studentElement('h3',chartNames[side]));
@@ -124,52 +118,47 @@ function drawStudentReports() {
             }
         }
     }
-    const body=document.getElementById('studentRanks');
-    body.replaceChildren();
-    const slice=pageOfFive('rank',s.ranked,studentView.page,page=>{
-        studentView.page=page;
-        drawStudentReports();
-        body.parentElement.parentElement.scrollTop=0;
-    });
-    studentView.page=slice.index;
-    for (const row of slice.rows) {
-        const tr=studentElement('tr');
-        for (const text of [row.name,row.dept,row.course,row.count]) tr.append(studentElement('td',text));
-        body.append(tr);
-    }
-    if (!body.children.length) {
-        const tr=studentElement('tr'),cell=studentElement('td','No identifiable reported users in this period.');
-        cell.colSpan=4; tr.append(cell);body.append(tr);
-    }
+}
+let studentExportBusy = false;
+function updateStudentExportButton() {
+    document.getElementById('studentPdf').disabled = studentExportBusy || !studentView.ready ||
+        !document.getElementById('exportDepartment').value;
 }
 function initStudentControls() {
+    const department = document.getElementById('exportDepartment');
+    for (const code of Object.keys(colleges).sort()) {
+        department.append(new Option(code, code));
+    }
+    department.onchange = updateStudentExportButton;
     const periods=document.querySelectorAll('[data-student-period]');
     for (const button of periods) {
         button.onclick=()=>{
             studentView.period=button.dataset.studentPeriod;
-            studentView.page=0;
             periods.forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
             drawStudentReports();
         };
     }
     document.getElementById('studentPdf').onclick=async e=>{
-        const button=e.currentTarget;
-        button.disabled=true;
+        const scope = department.value;
+        const period = studentView.period;
+        if (!scope || !studentView.ready || studentExportBusy) return;
+        studentExportBusy = true;
+        updateStudentExportButton();
         try {
-            const s=studentSummary(), rows=[];
+            const s=studentSummary(Date.now(), scope), rows=[];
+            const scopeName = scope === "all" ? "All departments" : scope;
             for (const side of Object.keys(chartNames)) {
                 for (const g of s[side]) {
                     rows.push([chartNames[side],g.code,'All courses',g.count]);
                     for (const [course,n] of g.courses) rows.push(['Course breakdown',g.code,course,n]);
                 }
             }
-            for (const u of s.ranked) rows.push([u.name,u.dept,u.course,u.count]);
             await loadReportLibrary('/JS/vendor/pdf-lib.min.js');
-            const pdf=await reportPdf({title:'Student reports by department',updated:s.range+(studentView.warning?' | Partial data':''),headers:['Measure / reported user','Department','Course','Reports'],rows});
+            const pdf=await reportPdf({title:'Student reports | '+scopeName,updated:s.range+(studentView.warning?' | Partial data':''),headers:['Measure','Department','Course','Reports'],rows});
             const doc=await PDFLib.PDFDocument.load(await pdf.arrayBuffer());
             const page=doc.insertPage(0,[842,595]);
-            page.drawText('GC FitShare | Student reports',{x:34,y:543,size:23});
-            page.drawText(s.range+'   |   '+s.total+' retained reports',{x:34,y:513,size:12});
+            page.drawText('GC FitShare | Student reports | '+scopeName,{x:34,y:543,size:23});
+            page.drawText(s.range+'   |   '+s.total+' distinct reports',{x:34,y:513,size:12});
             if(studentView.warning) page.drawText(studentView.warning,{x:34,y:490,size:10});
             Object.keys(chartNames).forEach((side,i)=>{
                 const x=34+i*395;
@@ -189,15 +178,14 @@ function initStudentControls() {
                 });
             });
             const url=URL.createObjectURL(new Blob([await doc.save()],{type:'application/pdf'}));
-            const a=studentElement('a');a.href=url;a.download='GC-FitShare-student-reports-'+studentView.period+'.pdf';a.click();
+            const a=studentElement('a');a.href=url;a.download='GC-FitShare-student-reports-'+period+'-'+scope+'.pdf';a.click();
             setTimeout(()=>URL.revokeObjectURL(url),30000);
         } catch(err){showAppAlert('Download failed',err.message,'error');}
-        finally {button.disabled=false;}
+        finally {studentExportBusy=false; updateStudentExportButton();}
     };
 }
 let profilesHaveDepartment=true;
-async function analyticsProfiles() {
-    const fields='id,username,full_name,course';
+async function analyticsProfiles(fields='id,username,full_name,course') {
     if (profilesHaveDepartment) {
         try {return await analyticsRows('users',fields+',department');}
         catch(e){if (!/42703|PGRST204/.test(e.code) && !/department.*does not exist/i.test(e.message)) throw e;}

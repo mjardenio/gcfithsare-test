@@ -1,7 +1,7 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * 5_Info_Support.js — HELP, ABOUT, POLICIES, CONTACT CONTENT
- * ═══════════════════════════════════════════════════════════════════════════ 
+ * ═══════════════════════════════════════════════════════════════════════════  
  *
  * PURPOSE
  *   Injects section HTML into #contentArea; highlights active card; sidebar
@@ -132,11 +132,11 @@ function showSection(section) {
                     <h3>Contact options</h3>
                     <p><strong>Student Affairs Office</strong><br>
                     For questions about campus policies, conduct, or general student-life matters connected to GC FitShare.<br>
-                    Email: <a href="mailto:studentaffairs@gordoncollege.edu.ph">studentaffairs@gordoncollege.edu.ph</a></p>
+                    Email: <a href="mailto:guidance.unit@gordoncollege.edu.ph">guidance.unit@gordoncollege.edu.ph</a></p>
                     
                     <p><strong>Technical support (app issues)</strong><br>
                     For login problems, bugs, or errors inside the application (screenshots welcome).<br>
-                    Email: <a href="mailto:fitshare.support@gmail.com">fitshare.support@gmail.com</a></p>
+                    Email: <a href="mailto:202411372@gordoncollege.edu.ph">202411372@gordoncollege.edu.ph</a></p>
 
                     <h3>Typical response time</h3>
                     <p>During regular school weeks, teams aim to acknowledge messages within <strong>one to two business days</strong>. Peak periods (exams, holidays) may take slightly longer; urgent safety concerns should also be reported through appropriate college channels as required.</p>

@@ -3,7 +3,7 @@
  * GC FITSHARE - LOGIN PAGE
  * Handles user authentication, password visibility toggle,
  * keyboard shortcuts, and Terms/Privacy modals
- * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════ 
  */
 
 // ─── Supabase Configuration ──────────────────────────────────────────────────

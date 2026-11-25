@@ -1,7 +1,7 @@
 /**
  * 8_Community.js — Community article feed
  * Channels, subscriptions (notification opt-in), user-shared articles,
- * and the admin RSS source manager + manual news fetch.
+ * and the admin RSS source manager + manual news fetch. 
  */
 
 let supabase;

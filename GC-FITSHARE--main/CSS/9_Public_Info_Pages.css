@@ -1,0 +1,207 @@
+body.public-info-page {
+    align-items: stretch;
+    min-height: 100vh;
+}
+
+.public-info-page .container {
+    margin-top: 0;
+    min-height: 100vh;
+}
+
+.public-info-page .top-bar {
+    justify-content: flex-start;
+    padding: 18px 32px;
+}
+
+.page-back {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    color: #098084;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.page-back svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.page-back:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.page-back:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.9);
+    outline-offset: 3px;
+}
+
+.public-info-page .center-logos {
+    margin-top: 80px;
+}
+
+.public-info-page .title-section {
+    margin-bottom: 26px;
+}
+
+.public-info-page .title-section h2 {
+    font-size: clamp(28px, 4vw, 38px);
+}
+
+.public-info-page .main-content {
+    padding: 16px 24px 30px;
+}
+
+.public-info-card {
+    width: min(900px, calc(100vw - 40px));
+    color: #263238;
+    padding: 34px 38px;
+    margin-bottom: 30px;
+}
+
+.terms-content h4 {
+    margin: 24px 0 8px;
+    color: #126b65;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.terms-content p {
+    margin: 0 0 12px;
+    color: #4d5659;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.terms-content ul {
+    margin: 4px 0 14px;
+    padding-left: 22px;
+    color: #4d5659;
+}
+
+.terms-content li {
+    padding: 3px 0 3px 4px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.support-page-card {
+    width: min(820px, calc(100vw - 40px));
+}
+
+.support-page-card .support-contact {
+    background: rgba(9, 132, 227, 0.08);
+    border-left: 4px solid #0984e3;
+    border-radius: 12px;
+    color: #52616b;
+    margin: 0;
+    padding: 28px 30px;
+}
+
+.support-page-card .support-contact h3 {
+    margin: 24px 0 12px;
+    color: #25333c;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.support-page-card .support-contact h3:first-child {
+    margin-top: 0;
+}
+
+.support-page-card .support-contact p {
+    margin: 0 0 18px;
+    color: #52616b;
+    font-size: 15px;
+    line-height: 1.75;
+}
+
+.support-page-card .support-contact p:last-child {
+    margin-bottom: 0;
+}
+
+.support-page-card .support-contact a {
+    color: #087cc8;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.support-page-card .support-contact a:hover {
+    text-decoration: underline;
+}
+
+.public-info-page footer {
+    color: rgba(255, 255, 255, 0.9);
+    opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+    .public-info-page .top-bar {
+        padding: max(12px, env(safe-area-inset-top)) 18px 12px;
+    }
+
+    .public-info-page .center-logos {
+        margin-top: 78px;
+    }
+
+    .public-info-page .main-content {
+        padding: 14px 12px 24px;
+    }
+
+    .public-info-page .title-section {
+        margin-bottom: 20px;
+    }
+
+    .public-info-card,
+    .support-page-card {
+        width: 100%;
+        padding: 26px 22px;
+    }
+
+    .support-page-card .support-contact {
+        padding: 20px 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .public-info-page .title-section h2 {
+        font-size: 26px;
+    }
+
+    .public-info-page .tagline {
+        font-size: 11px;
+        padding: 0 12px;
+    }
+
+    .public-info-card,
+    .support-page-card {
+        padding: 22px 18px;
+    }
+
+    .terms-content p,
+    .terms-content li {
+        font-size: 13px;
+    }
+
+    .support-page-card .support-contact {
+        padding: 18px 14px;
+    }
+
+    .support-page-card .support-contact a {
+        overflow-wrap: anywhere;
+    }
+}

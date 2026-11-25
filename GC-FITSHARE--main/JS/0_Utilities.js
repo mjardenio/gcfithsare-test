@@ -1,7 +1,7 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * 0_Utilities.js — SHARED LIBRARY (load on every authenticated page before others)
- * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════ 
  *
  * PURPOSE
  *   Single Supabase client, auth helper, HTML safety, dates, notifications,

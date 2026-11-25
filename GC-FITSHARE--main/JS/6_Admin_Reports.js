@@ -3,7 +3,7 @@ const reportLibraries = new Map();
 function loadReportLibrary(path) {
     if (!reportLibraries.has(path)) {
         reportLibraries.set(path, new Promise((resolve, reject) => {
-            const script = document.createElement('script');
+            const script = document.createElement('script'); 
             script.src = path; 
             script.onload = resolve;
             script.onerror = () => { 
@@ -24,11 +24,6 @@ async function collectToolReport(tool) {
     const identify = (map, id) => map.get(id)?.full_name || map.get(id)?.username || id || '';
     const latest = (rows, key) => rows.sort((a, b) => String(b[key] || '').localeCompare(String(a[key] || '')));
     const table = (headers, rows) => ({ headers, rows });
-    if (tool === 'summary') {
-        const { metrics, updated } = dashboardReport;
-        return { headers: ['Category', 'Metric', 'Count', 'Snapshot UTC'], updated,
-            rows: metrics.map(m => [m.group, m.label, m.count ?? 'Unavailable', updated]) };
-    }
     if (tool === 'total-users') {
         const rows = await users();
         rows.sort((a,b) => String(a.full_name || a.username || '').localeCompare(b.full_name || b.username || ''));
@@ -96,7 +91,7 @@ function reportCsv({headers, rows}) {
 }
 
 function initAdminExports() {
-    const formats = ['csv','pdf','xlsx'];
+    const formats = ['csv','pdf'];
     for (const [tool,id] of Object.entries(toolModalMap)) {
         const modal = document.getElementById(id);
         const controls = document.createElement('div');
@@ -104,7 +99,7 @@ function initAdminExports() {
         for (const format of formats) {
             const button = document.createElement('button');
             button.type = 'button';
-            button.textContent = 'Download ' + (format === 'xlsx' ? 'Excel' : format.toUpperCase());
+            button.textContent = 'Download ' + format.toUpperCase();
             button.dataset.toolFormat = format;
             controls.append(button);
         }
@@ -114,11 +109,7 @@ function initAdminExports() {
             if (format) exportAdminReport(tool, modal.querySelector('h2').textContent, format, controls);
         });
     }
-    const controls = document.querySelector('.report-heading .report-actions');
-    controls.addEventListener('click', event => {
-        const format = event.target.dataset.reportFormat;
-        if (format && dashboardReport) exportAdminReport('summary','Dashboard analytics',format,controls);
-    });
+
 }
 
 async function exportAdminReport(tool, title, format, controls) {
@@ -136,10 +127,6 @@ async function exportAdminReport(tool, title, format, controls) {
             await loadReportLibrary('/JS/vendor/pdf-lib.min.js');
             blob = await reportPdf(report);
         }
-        if (format === 'xlsx') {
-            await loadReportLibrary('/JS/vendor/jszip.min.js');
-            blob = await reportWorkbook(report);
-        }
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.href = url;
@@ -152,42 +139,6 @@ async function exportAdminReport(tool, title, format, controls) {
         controls.removeAttribute('aria-busy');
         buttons.forEach(b => { b.disabled = false; });
     }
-}
-
-async function reportWorkbook({ title, updated, headers, rows }) {
-    const response = await fetch('/ASSETS/admin-report-template.xlsx');
-    if (!response.ok) throw new Error('Workbook template could not load.');
-    const book = await JSZip.loadAsync(await response.arrayBuffer());
-    const xml = value => String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'')
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const column = index => String.fromCharCode(65 + index);
-    const last = column(headers.length - 1);
-    function rowXml(values, number, style, height) {
-        const cells = values.map((value, index) => {
-            const ref = column(index) + number;
-            if (typeof value === 'number') return '<c r="' + ref + '" s="' + style + '"><v>' + value + '</v></c>';
-            const text = String(value ?? '');
-            if (text.length > 32767) throw new Error('A record exceeds the Excel cell limit. Use CSV or PDF for this report.');
-            return '<c r="' + ref + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' +
-                xml(text) + '</t></is></c>';
-        }).join('');
-        return '<row r="' + number + '"' + (height ? ' ht="' + height + '" customHeight="1"' : '') + '>' + cells + '</row>';
-    }
-    const widths = headers.map((header,i) => rows.reduce((width,row) =>
-        Math.max(width, Math.min(52, String(row[i] ?? '').length + 2)), Math.max(16,header.length+2)));
-    const cols = widths.map((width,i) => '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+width+'" customWidth="1"/>').join('');
-    const table = [
-        rowXml(['GC FitShare | ' + title],1,1,29),
-        rowXml([updated + '   |   ' + rows.length + ' records'],2,2,21),
-        rowXml(headers,3,3,24),
-        ...rows.map((row,i) => rowXml(row,i+4,4+i%2))
-    ].join('');
-    book.file('xl/worksheets/sheet1.xml',
-        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-        '<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
-        '<cols>'+cols+'</cols><sheetData>'+table+'</sheetData><autoFilter ref="A3:'+last+(rows.length+3)+'"/>' +
-        '<mergeCells count="2"><mergeCell ref="A1:'+last+'1"/><mergeCell ref="A2:'+last+'2"/></mergeCells></worksheet>');
-    return book.generateAsync({type:'blob',compression:'DEFLATE',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
 
 async function reportPdf({ title, updated, headers, rows }) {

@@ -1,6 +1,6 @@
 /**
  * Guidance Counselling Scheduling Module
- * Handles appointment booking for users and management for admins
+ * Handles appointment booking for users and management for admins 
  */ 
 
 let supabase;

@@ -2,7 +2,7 @@
     --primary-color: #1dd1a1;
     --secondary-color: #0984e3;
     --light-bg: #f5f6fa;
-    --card-bg: #ffffff;
+    --card-bg: #ffffff; 
     --text-primary: #2d3436; 
     --text-secondary: #636e72;
     --border-color: #dfe6e9; 
@@ -1480,7 +1480,7 @@ textarea.expert-decision-note:focus {
     color: var(--text-primary);
 }
 @container (min-width: 584px) {
-    .moderation-activity { grid-column: span 2; }
+    .moderation-activity { grid-column: 1 / -1; }
 }
 .moderation-activity h3 { margin: 0; font-size: 1.05rem; }
 #activityStatus, .analytics-caption, #activityEvents time {
@@ -1534,12 +1534,12 @@ textarea.expert-decision-note:focus {
 
 #directoryList {height:min(48vh,360px); scrollbar-gutter:stable;}
 #directoryModal .modal-content {max-height:92dvh;overflow:auto;}
-.dashboard-report:has(#reportTitle) {display:grid;grid-template-columns:minmax(160px,.75fr) minmax(230px,1.25fr) minmax(240px,1fr);gap:20px;align-items:start;}
+.dashboard-report:has(#reportTitle) {display:grid;grid-template-columns:minmax(160px,.75fr) minmax(230px,1.25fr);gap:20px;align-items:start;}
 .dashboard-report .report-heading,.dashboard-report .report-charts {display:contents;}
 .report-heading .report-actions {grid-column:1;grid-row:2;justify-content:flex-start;}
 .report-charts > section {grid-row:1 / span 2;}
 .report-charts > section:first-child {grid-column:2;}
-.report-charts > section:last-child {grid-column:3;}
+
 .student-report {margin-top:18px;}
 .student-head {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .student-head h2 {margin:0;}
@@ -1586,3 +1586,94 @@ textarea.expert-decision-note:focus {
 .report-actions .student-period button {border-color:transparent;padding:6px 10px;}
 .report-actions .student-period button[aria-pressed=true] {background:#087565;color:#fff;font-weight:700;}
 .student-period button:focus-visible {outline:2px solid var(--primary-color);outline-offset:1px;}
+
+#directoryDepartment, #accountReviewDays {color:var(--text-primary);background:var(--card-bg);border:1px solid var(--border-color);padding:8px;border-radius:6px;}
+#directoryDepartment {display:block;width:100%;margin:6px 0 10px;}
+.dashboard-container > .moderation-activity {margin-top:16px;}
+#activityEvents {max-height:16rem;overflow:auto;scrollbar-color:#527571 var(--card-bg);scrollbar-width:thin;}
+#activityEvents::-webkit-scrollbar {width:8px;height:8px;}
+#activityEvents::-webkit-scrollbar-track {background:var(--card-bg);}
+#activityEvents::-webkit-scrollbar-thumb {background:#527571;border-radius:8px;}
+#activityEvents table {width:100%;border-collapse:collapse;text-align:left;}
+#activityEvents th,#activityEvents td {padding:9px 14px;border-bottom:1px solid var(--border-color);vertical-align:top;}
+#activityEvents th {position:sticky;top:0;background:var(--card-bg);}
+#activityEvents td:nth-child(n+3) {white-space:nowrap;}
+#accountReview {margin:auto;width:min(500px,94vw);max-height:88dvh;overflow:auto;border:1px solid var(--border-color);border-radius:12px;background:var(--card-bg);color:var(--text-primary);}
+#accountReview::backdrop {background:#0009;}
+#accountReviewActions {display:flex;align-items:center;flex-wrap:wrap;gap:8px;border:0;margin-top:16px;}
+#accountReviewDays,
+#accountReviewActions [data-posting-action="suspend"] {
+    box-sizing: border-box;
+    min-height: 40px;
+}
+#accountReviewActions [data-posting-action="suspend"]:enabled {
+    background: #f6c76e;
+    color: #30230c;
+}
+#accountReviewActions:disabled {opacity:.55;}
+.report-row-actions {margin-top:10px;}
+
+
+/* Place the overview title, chart and downloads independently on desktop. */
+.dashboard-report:has(#reportTitle) {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.dashboard-report .report-heading .report-actions {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    justify-content: flex-end;
+}
+.dashboard-report .report-charts > section {
+    grid-row: 1;
+    max-width: 100%;
+}
+@container (max-width: 1050px) {
+    .dashboard-report:has(#reportTitle) { display: block; }
+    .dashboard-report .report-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .dashboard-report .report-heading .report-actions { margin: 0 0 0 auto; }
+    .dashboard-report .report-charts > section {
+        width: fit-content;
+        margin: 20px auto 0;
+    }
+    .outcomes-layout { justify-content: center; }
+}
+.student-export {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+.student-export .student-period { border: 0; padding: 0; margin: 0; }
+.student-export :is(button, select) { box-sizing: border-box; height: 40px; }
+.export-department { display: grid; gap: 3px; font-size: .85rem; }
+#exportDepartment, #moderationReason {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+    font: inherit;
+}
+#accountReviewActions { display: grid; min-width: 0; }
+.review-duration, .review-buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.review-buttons button { min-height: 40px; }
+#moderationConfirm {
+    margin: auto;
+    width: min(440px, 92vw);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+#moderationConfirm::backdrop { background: #0009; }
+#moderationConfirm form { display: grid; gap: 12px; }
+#moderationReason { resize: vertical; width: 100%; box-sizing: border-box; }
+#moderationConfirm .review-buttons { justify-content: flex-end; }

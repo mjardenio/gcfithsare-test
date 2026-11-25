@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">  
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">    
     <meta name="referrer" content="strict-origin-when-cross-origin"> 
     <meta name="theme-color" content="#098084">
     <link rel="icon" type="image/png" href="/ASSETS/LOGO%20ICON/GCFITSHARE.png">
@@ -195,56 +195,35 @@
                 </div>
 
                 
-                <aside class="moderation-activity" aria-labelledby="activityTitle">
+                
+            </div>
+            <details class="analytics-fold"><summary>Dashboard analytics</summary>
+<section class="dashboard-report student-report" aria-labelledby="studentTitle">
+<header class="student-head"><div><h2 id="studentTitle">Student reports by department</h2>
+<p id="studentRange" role="status">Loading student reports…</p></div>
+<div class="report-actions student-export"><fieldset class="student-period"><legend>Period</legend><button type="button" data-student-period="week" aria-pressed="true">This week</button><button type="button" data-student-period="month" aria-pressed="false">This month</button><button type="button" data-student-period="all" aria-pressed="false">All time</button></fieldset>
+<label class="export-department">Department
+    <select id="exportDepartment">
+        <option value="">Select department…</option>
+        <option value="all">All departments</option>
+    </select>
+</label>
+<button id="studentPdf" disabled>Download PDF</button></div></header>
+<p class="analytics-caption">Select a department to see its courses.</p>
+<div class="student-charts"><section id="student-target"></section><section id="student-source"></section></div>
+</section></details>
+            <aside class="moderation-activity" aria-labelledby="activityTitle">
                     <div class="activity-heading"><h3 id="activityTitle">Recent moderation activity</h3><div><button type="button" id="undoActivity" hidden>Restore log</button> <button type="button" id="clearActivity" disabled>Clear log</button></div></div>
                     <p id="activityStatus">Loading activity…</p>
-                    <ol id="activityEvents" tabindex="0" aria-label="Moderation events"></ol>
+                    <div id="activityEvents" tabindex="0" role="region" aria-label="Moderation events">
+                        <table aria-labelledby="activityTitle"><thead><tr><th scope="col">Name</th><th scope="col">Activity</th><th scope="col">Date (PHT)</th><th scope="col">Time (PHT)</th></tr></thead>
+                        <tbody id="activityRows"></tbody></table></div>
                     <nav class="activity-pages" aria-label="Activity pages">
                         <button type="button" id="previousActivity" disabled>Previous</button>
                         <span id="activityPage" role="status">Page 1 of 1</span>
                         <button type="button" id="nextActivity" disabled>Next</button>
                     </nav>
                 </aside>
-            </div>
-            <details class="analytics-fold"><summary>Dashboard analytics</summary>
-<section class="dashboard-report" aria-labelledby="reportTitle">
-    <header class="report-heading">
-        <div>
-            <h2 id="reportTitle">Dashboard overview</h2>
-            <p id="reportStamp" role="status">Loading dashboard data…</p>
-        </div>
-
-        <div class="report-actions">
-            <button type="button" data-report-format="csv" disabled>Download CSV</button>
-            <button type="button" data-report-format="pdf" disabled>Download PDF</button>
-            <button type="button" data-report-format="xlsx" disabled>Download Excel</button>
-        </div>
-    </header>
-
-    <div class="report-charts">
-        <section>
-            <h3>Expert application outcomes</h3>
-            <p class="analytics-caption">Share of all submitted applications</p>
-            <div class="outcomes-layout">
-                <div class="outcome-ring" aria-hidden="true"><strong id="outcomeTotal">—</strong></div>
-                <ul id="outcomeLegend" aria-label="Application outcomes"></ul>
-            </div>
-        </section>
-        <section>
-            <h3>Moderation counts</h3>
-            <div id="moderationCounts"></div>
-        </section>
-    </div>
-</section>
-<section class="dashboard-report student-report" aria-labelledby="studentTitle">
-<header class="student-head"><div><h2 id="studentTitle">Student reports by department</h2>
-<p id="studentRange" role="status">Loading student reports…</p></div>
-<div class="report-actions"><fieldset class="student-period"><legend>Period</legend><button type="button" data-student-period="week" aria-pressed="true">This week</button><button type="button" data-student-period="month" aria-pressed="false">This month</button><button type="button" data-student-period="all" aria-pressed="false">All time</button></fieldset>
-<button id="studentPdf" disabled>Download PDF</button></div></header>
-<p class="analytics-caption">Select a department to see its courses.</p>
-<div class="student-charts"><section id="student-target"></section><section id="student-source"></section></div>
-<h3>Most reported users</h3><div class="rank-scroll"><table><thead><tr><th>User</th><th>Department</th><th>Course</th><th>Reports</th></tr></thead><tbody id="studentRanks"></tbody></table></div><nav class="activity-pages" aria-label="Most reported users pages"><button id="rankPrev" type="button" disabled>Previous</button><span id="rankPage" role="status">Page 1 of 1</span><button id="rankNext" type="button" disabled>Next</button></nav>
-</section></details>
         </div>
     </main>
 </div>
@@ -274,6 +253,8 @@
     </div>
 
     <div class="modal-body">
+      <label for="directoryDepartment">Department</label>
+      <select id="directoryDepartment" class="expert-search-input"><option value="">All departments</option></select>
       <label for="directorySearch">Search by name or username</label>
       <input type="search" id="directorySearch" class="expert-search-input"
              autocomplete="off">
@@ -388,6 +369,33 @@
     </div>
 </div>
 
+<dialog id="accountReview" aria-labelledby="accountReviewTitle">
+    <header class="modal-header"><h2 id="accountReviewTitle">Review reported account</h2><form method="dialog"><button class="modal-close" aria-label="Close">&times;</button></form></header>
+    <div class="modal-body">
+        <h3 id="accountReviewName"></h3><p id="accountReviewReason" class="row-text"></p>
+        <p id="accountReviewState" class="row-meta" role="status"></p>
+        <fieldset id="accountReviewActions" disabled>
+            <div class="review-duration"><label for="accountReviewDays">Suspend posting for</label>
+            <select id="accountReviewDays"><option value="1">1 day</option><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select>
+            </div>
+            <div class="review-buttons"><button type="button" class="btn-warn" data-posting-action="suspend">Suspend from posting</button>
+            <button type="button" class="btn-danger" data-posting-action="ban">Ban account</button>
+            <button type="button" class="btn-secondary" data-posting-action="lift">Lift restriction</button></div>
+        </fieldset>
+    </div>
+</dialog>
+<dialog id="moderationConfirm" aria-labelledby="moderationTitle">
+    <form method="dialog" class="modal-body">
+        <h3 id="moderationTitle"></h3>
+        <p id="moderationDescription"></p>
+        <label for="moderationReason" id="moderationReasonLabel">Reason</label>
+        <textarea id="moderationReason" rows="3" maxlength="500" required></textarea>
+        <div class="review-buttons">
+            <button class="btn-secondary" type="button" id="cancelModeration">Cancel</button>
+            <button id="submitModeration" class="btn-warn" value="confirm">Confirm</button>
+        </div>
+    </form>
+</dialog>
 <div id="flaggedReviewModal" class="modal hidden" aria-modal="true" role="dialog">
     <div class="modal-content flagged-review-modal">
         <div class="modal-header">

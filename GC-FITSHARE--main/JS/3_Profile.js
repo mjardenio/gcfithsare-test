@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════════════ 
  * 
  * PURPOSE
- *   Profile data, edit modal, avatar upload, posts tab, bookmarks, follows, 
+ *   Profile data, edit modal, avatar upload, posts tab, bookmarks, follows,  
  *   expert endorsements on cards, comments on profile posts.
  *
  * DEPENDS ON

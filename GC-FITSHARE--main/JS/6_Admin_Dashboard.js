@@ -1,7 +1,7 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * 6_Admin_Dashboard.js — ADMIN CONSOLE (moderation, experts, flags) 
- * ═══════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════  
  *
  * PURPOSE
  *   Gate access via public.admins + users.is_admin; expert applications;   
@@ -831,6 +831,13 @@ function initUserDirectory() {
   const card = document.querySelector('[data-tool="total-users"]');
   const badge = document.getElementById('directoryCount');
   const search = document.getElementById('directorySearch');
+  const department = document.getElementById('directoryDepartment');
+  for (const code of [...Object.keys(colleges),'Unspecified']) {
+    const option=document.createElement('option');
+    option.value=code;
+    option.textContent=colleges[code] ? code+' — '+colleges[code] : code;
+    department.append(option);
+  }
   const status = document.getElementById('directoryStatus');
   const list = document.getElementById('directoryList');
 
@@ -840,6 +847,7 @@ function initUserDirectory() {
   function renderList() {
     const term = search.value.trim().toLowerCase();
     const matches = profiles.filter(user =>
+      (!department.value || studentDepartment(user) === department.value) &&
       [user.full_name, user.username].some(value =>
         (value || '').toLowerCase().includes(term)
       )
@@ -876,7 +884,7 @@ function initUserDirectory() {
     }
 
     list.replaceChildren(items);
-    status.textContent = term
+    status.textContent = term || department.value
       ? `${matches.length} of ${profiles.length} users match your search.`
       : `${profiles.length} registered users.`;
   }
@@ -885,6 +893,8 @@ function initUserDirectory() {
     if (loading) return;
     loading = true;
     search.value = '';
+    department.value = '';
+    department.disabled = true;
     search.disabled = true;
     list.replaceChildren();
     status.textContent = 'Loading users…';
@@ -896,34 +906,15 @@ function initUserDirectory() {
         if (admList) admList.forEach(a => { if (a.user_id) adminIds.add(a.user_id); });
       } catch (_) {}
 
-      const users = [];
-      let lastId = null;
-
-      while (true) {
-        let query = supabase.from('users')
-          .select('id, full_name, username, is_expert, is_admin')
-          .order('id', { ascending: true })
-          .limit(500);
-
-        if (lastId !== null) query = query.gt('id', lastId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-        if (!data.length) break;
-
-        for (const u of data) {
-          u.is_admin = !!u.is_admin || adminIds.has(u.id);
-        }
-        users.push(...data);
-        lastId = data[data.length - 1].id;
-      }
-
+      const users = await analyticsProfiles('id,full_name,username,course,is_expert,is_admin');
+      for (const u of users) u.is_admin = !!u.is_admin || adminIds.has(u.id);
       profiles = users.sort((a, b) =>
         (a.full_name || a.username || '').localeCompare(b.full_name || b.username || '')
       );
 
       badge.textContent = String(profiles.length);
       renderList();
+      department.disabled = false;
       search.disabled = false;
     } catch (error) {
       console.warn('User directory failed to load:', error);
@@ -934,6 +925,8 @@ function initUserDirectory() {
   }
 
   search.disabled = true;
+  department.disabled = true;
+  department.addEventListener('change',renderList);
   search.addEventListener('input', renderList);
   card.addEventListener('click', loadList, { capture: true });
 
@@ -1022,14 +1015,10 @@ function filterExperts(searchTerm) {
     }
 }
 
-let dashboardReport;
 let analyticsRunning = false;
 let analyticsQueued = false;
 let analyticsStarted = false;
 const analyticsInterval = 30000;
-const outcomeColors = {
-    Approved: '#15b99b', Pending: '#e5a438', Rejected: '#df7078', Other: '#8396bb'
-};
 
 // Read only the columns needed by analytics. Keyset pagination also works
 // when the server caps a response below the requested page size.
@@ -1069,35 +1058,6 @@ function applicationOutcomes(rows) {
         else counts.Other++;
     }
     return counts;
-}
-
-function renderOutcomes(counts, total) {
-    const legend = document.getElementById('outcomeLegend');
-    const ring = document.querySelector('.outcome-ring');
-    legend.replaceChildren();
-    ring.style.background = '';
-    document.getElementById('outcomeTotal').textContent = total ?? '—';
-    if (!total) {
-        const message = document.createElement('li');
-        message.textContent = total === 0 ? 'No applications yet.' : 'Application data unavailable.';
-        legend.append(message);
-        return;
-    }
-    const stops = [];
-    let accumulated = 0;
-    for (const [label, count] of Object.entries(counts)) {
-        if (label === 'Other' && !count) continue;
-        const start = accumulated / total * 100;
-        accumulated += count;
-        if (count) stops.push(outcomeColors[label] + ' ' + start + '% ' + accumulated / total * 100 + '%');
-        const entry = document.createElement('li');
-        const dot = document.createElement('i');
-        dot.style.background = outcomeColors[label];
-        entry.append(dot, label + ' · ' + count + ' of ' + total + ' (' +
-            (count / total * 100).toLocaleString(undefined, { maximumFractionDigits: 1 }) + '%)');
-        legend.append(entry);
-    }
-    ring.style.background = 'conic-gradient(' + stops.join(', ') + ')';
 }
 
 const activityPageSize = 8;
@@ -1191,7 +1151,7 @@ function renderActivity(flags, accounts, blocks, actions, people) {
     activityPartial=sources.some(([,rows])=>!rows);
     for(const [kind,rows,who] of sources) for(const r of rows||[]) {
         const time=Date.parse(r.created_at);
-        if(time>clearedThrough)liveEvents.push({key:kind+':'+r.id,time,label:(r.label||kind)+' · '+who(r)});
+        if(time>clearedThrough)liveEvents.push({key:kind+':'+r.id,time,label:r.label||kind,actor:who(r)});
     }
     mergeActivity();
 }
@@ -1213,15 +1173,14 @@ function drawActivityPage() {
     const start = activityPage * activityPageSize;
     const list = document.getElementById('activityEvents');
     const scroll = list.scrollTop;
-    list.replaceChildren();
-    for (const event of activity.slice(start, start + activityPageSize)) {
-        const item = document.createElement('li');
-        const stamp = document.createElement('time');
-        const date = new Date(event.time);
-        stamp.dateTime = date.toISOString();
-        stamp.textContent = date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-        item.append(event.label, stamp);
-        list.append(item);
+    const body = document.getElementById('activityRows');
+    body.replaceChildren();
+    for (const event of activity.slice(start,start+activityPageSize)) {
+        const row=document.createElement('tr');
+        const date=new Date(event.time);
+        const time=date.toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'numeric',minute:'2-digit'});
+        for(const value of [event.actor,event.label,reportDate.format(date),time]) row.append(studentElement('td',value));
+        body.append(row);
     }
     list.scrollTop = scroll;
     document.getElementById('activityPage').textContent = 'Page ' + (activityPage + 1) + ' of ' + pages;
@@ -1255,39 +1214,18 @@ async function refreshDashboardAnalytics() {
         const outcomes = applicationOutcomes(apps);
         const approvedUsers = apps && new Set(apps.filter(isExpertApplicationDecidedApproved)
             .map(row => row.user_id || 'application:' + row.id)).size;
-        const metrics = [];
-        const boxes = document.getElementById('moderationCounts');
-        boxes.replaceChildren();
-        function add(group, label, count, badge) {
-            metrics.push({ group, label, count });
-            if (badge) document.getElementById(badge).textContent = count ?? (badge === 'reportedAccountsBadge' ? '0' : '—');
-            if (group !== 'Moderation') return;
-            const box = document.createElement('div');
-            const value = document.createElement('strong');
-            const caption = document.createElement('span');
-            value.textContent = count ?? 'Unavailable';
-            caption.textContent = label;
-            box.append(value, caption);
-            boxes.append(box);
+        function setBadge(id, count) {
+            document.getElementById(id).textContent = count ?? '—';
         }
-        add('Moderation', 'Pending post approvals', pending, 'pendingPostsBadge');
-        add('Moderation', 'User-reported posts', flags?.filter(isUserReportModerationQueueRow).length, 'reportsBadge');
-        add('Moderation', 'Reported accounts', accounts?.count, 'reportedAccountsBadge');
-        add('Moderation', 'AI block attempts', blocks?.count, 'aiBlocksBadge');
-        add('Wellness experts', 'Pending applications', outcomes?.Pending, 'expertAppsBadge');
-        add('Wellness experts', 'Active wellness experts', active, 'activeExpertsBadge');
-        add('Wellness experts', 'Approved experts history', approvedUsers, 'expertHistoryBadge');
-        for (const label of Object.keys(outcomeColors)) add('Expert applications', label, outcomes?.[label]);
-        renderOutcomes(outcomes, apps?.length);
+        setBadge('pendingPostsBadge', pending);
+        setBadge('reportsBadge', flags?.filter(isUserReportModerationQueueRow).length);
+        setBadge('reportedAccountsBadge', accounts?.count);
+        setBadge('aiBlocksBadge', blocks?.count);
+        setBadge('expertAppsBadge', outcomes?.Pending);
+        setBadge('activeExpertsBadge', active);
+        setBadge('expertHistoryBadge', approvedUsers);
         const userMap=await prepareStudentReports(flags,accounts?.rows || null,people);
         renderActivity(flags,accounts,blocks,[...localActions.values()],userMap);
-        const updated = new Date().toISOString();
-        dashboardReport = { updated, metrics };
-        const partial = results.some(result => result.status === 'rejected');
-        document.getElementById('reportStamp').textContent =
-            (partial ? 'Partial data · Last checked ' : 'Updated ') + new Date(updated).toLocaleTimeString() +
-            ' · Refreshes every 30 seconds';
-        document.querySelectorAll('[data-report-format]').forEach(button => { button.disabled = false; });
     } finally {
         analyticsRunning = false;
         if (analyticsQueued) {
@@ -2038,9 +1976,128 @@ function renderReportedAccountsSection(result) {
                 </p>
                 <p class="row-text"><strong>Reason:</strong> ${escapeHtml(r.reason || '—')}</p>
                 ${r.details ? `<p class="row-text"><strong>Details:</strong> ${escapeHtml(r.details)}</p>` : ''}
+                <div class="review-buttons report-row-actions">
+                    <button type="button" class="btn-secondary account-review-open">Review reported account</button>
+                    <button type="button" class="btn-danger dismiss-report">Dismiss</button>
+                </div>
             </article>`
         )
         .join('');
+    list.querySelectorAll('.account-review-open').forEach((button,index)=>{
+        button.onclick=()=>openAccountReview(page.rows[index]);
+    });
+    list.querySelectorAll('.dismiss-report').forEach((button, index) => {
+        button.onclick = () => dismissAccountReport(page.rows[index], button);
+    });
+}
+
+async function dismissAccountReport(report, button) {
+    if (button.disabled || report.id == null) return;
+    button.disabled = true;
+    try {
+        const name = report.reported_user?.full_name || report.reported_user?.username || report.reported_user_id;
+        const message = 'Permanently delete this report about ' + name + '?';
+        const confirmed = typeof CustomAlert !== 'undefined'
+            ? await CustomAlert.confirm('Dismiss report?', message, {confirmText:'Dismiss', danger:true})
+            : window.confirm(message);
+        if (!confirmed) return;
+        const {data, error} = await supabase.from('reported_accounts')
+            .delete().eq('id', report.id).select('id').maybeSingle();
+        if (error || data?.id !== report.id) {
+            throw new Error(error?.message || 'The report may already be gone, or deletion was denied.');
+        }
+        recordActivityAction('Dismissed account report · ' + name);
+        renderReportedAccountsSection(await loadReportedAccounts());
+    } catch (error) {
+        showAppAlert('Could not dismiss report', error.message, 'error');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+function confirmAccountAction(action, name, days) {
+    const dialog = document.getElementById('moderationConfirm');
+    const form = dialog.querySelector('form');
+    const reason = document.getElementById('moderationReason');
+    const reasonLabel = document.getElementById('moderationReasonLabel');
+    const submit = document.getElementById('submitModeration');
+    const title = {suspend:'Suspend from posting', ban:'Ban account', lift:'Lift restriction'}[action];
+    const needsReason = action !== 'lift';
+    form.reset();
+    dialog.returnValue = '';
+    document.getElementById('moderationTitle').textContent = title;
+    document.getElementById('moderationDescription').textContent = action === 'suspend'
+        ? name + ' will be unable to post for ' + days + (days === 1 ? ' day.' : ' days.')
+        : action === 'ban' ? name + ' will be unable to post indefinitely.' : 'Restore posting access for ' + name + '?';
+    reasonLabel.textContent = action === 'ban' ? 'Reason for ban' : 'Reason for suspension';
+    reasonLabel.hidden = reason.hidden = !needsReason;
+    reason.required = needsReason;
+    reason.setCustomValidity('');
+    reason.oninput = () => reason.setCustomValidity('');
+    submit.textContent = title;
+    submit.className = action === 'ban' ? 'btn-danger' : 'btn-warn';
+    form.onsubmit = event => {
+        if (needsReason && !reason.value.trim()) {
+            event.preventDefault();
+            reason.setCustomValidity('Enter a reason before confirming.');
+            reason.reportValidity();
+        }
+    };
+    document.getElementById('cancelModeration').onclick = () => dialog.close('cancel');
+    return new Promise(resolve => {
+        dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm' ? reason.value.trim() : null), {once:true});
+        dialog.showModal();
+        (needsReason ? reason : document.getElementById('cancelModeration')).focus();
+    });
+}
+
+async function openAccountReview(report) {
+    const id=report.reported_user_id;
+    const name=report.reported_user?.full_name || report.reported_user?.username || id || 'Unavailable';
+    const dialog=document.getElementById('accountReview');
+    const actions=document.getElementById('accountReviewActions');
+    const state=document.getElementById('accountReviewState');
+    const daysSelect=document.getElementById('accountReviewDays');
+    const isCurrent=()=>dialog.open && dialog.dataset.review===String(report.id);
+    dialog.dataset.review=String(report.id);
+    document.getElementById('accountReviewName').textContent=name;
+    document.getElementById('accountReviewReason').textContent=[report.reason,report.details].filter(Boolean).join(' · ');
+    actions.disabled=true;
+    actions.onclick=null;
+    daysSelect.value='7';
+    state.textContent='Loading posting status…';
+    if(!dialog.open) dialog.showModal();
+    if(!id || id===currentUser.id) {
+        state.textContent=id?'You cannot moderate your own account.':'Reported account unavailable.';
+        return;
+    }
+    try {
+        const fields='id,is_suspended,suspended_until';
+        const {data,error}=await supabase.from('users').select(fields).eq('id',id).maybeSingle();
+        if(!isCurrent())return;
+        if(error || !data) throw new Error(error?.message || 'Reported account unavailable.');
+        state.textContent=formatUserSuspensionLine(data);
+        actions.disabled=false;
+        actions.onclick=async event=>{
+            const action=event.target.closest('[data-posting-action]')?.dataset.postingAction;
+            if(!action || actions.disabled || !isCurrent())return;
+            const days=Number(daysSelect.value);
+            const label={suspend:'Suspend posting for '+days+' days',ban:'Ban from posting indefinitely',lift:'Lift posting restriction'}[action];
+            if (!label) return;
+            const reason = await confirmAccountAction(action, name, days);
+            if (reason === null || !isCurrent()) return;
+            actions.disabled=true;
+            try {
+                const until=action==='suspend'?new Date(Date.now()+days*86400000).toISOString():null;
+                const {data:updated,error:failure}=await supabase.from('users')
+                    .update({is_suspended:action!=='lift',suspended_until:until}).eq('id',id).select(fields).maybeSingle();
+                if(failure || !updated)throw new Error(failure?.message || 'Account update could not be confirmed.');
+                recordActivityAction(label+' · '+name+(reason ? ' · Reason: '+reason : ''));
+                if(isCurrent())state.textContent=formatUserSuspensionLine(updated);
+            } catch(err) {if(isCurrent())state.textContent='Update failed. '+err.message;}
+            finally {if(isCurrent())actions.disabled=false;}
+        };
+    } catch(err) {if(isCurrent())state.textContent='Could not load account. '+err.message;}
 }
 
 async function loadFlaggedContent() {

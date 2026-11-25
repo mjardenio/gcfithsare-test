@@ -7,7 +7,7 @@
  *   Main social feed: load posts, filters, create post, AI moderation hook,
  *   comments tree, bookmarks, reports, wellness prompts, recommendations.
  *
- * DEPENDS ON
+ * DEPENDS ON 
  *   0_Utilities.js, 0_Footer.js, 0_Alerts.js; optional 0_AI_* for moderation.
  *
  * SECTIONS (search for these `// ───` headers in this file)

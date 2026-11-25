@@ -32,6 +32,8 @@ let notificationsFeatureAvailable = true;
 let notificationBadgeChannel = null;
 let userSearchResults = [];
 let userSearchRequestToken = 0;
+let postSearchResults = [];
+let searchSuggestionQuery = '';
 let currentUserIsExpert = false;
 let currentUserIsAdmin = false;
 let expertWeeklyRemaining = 0;
@@ -696,11 +698,9 @@ function displayPostsByFilter(filter) {
     markSavedBookmarks();
 }
 
-function filterPostsBySearch(query) {
-    const container = document.getElementById('postsContainer');
-    if (!query) { displayPostsByFilter(currentFilter); return; }
-
+function getPostsMatchingSearch(query) {
     const q = query.toLowerCase().trim();
+    if (!q) return [];
     const terms = q.match(/[a-z0-9]+/g)?.filter(term => term.length > 1) || [];
     const categoryKeywords = {
         fitness: ['fitness', 'workout', 'exercise', 'gym', 'training', 'cardio', 'strength', 'muscle', 'running'],
@@ -713,7 +713,7 @@ function filterPostsBySearch(query) {
             .filter(([, keywords]) => terms.some(term => keywords.some(keyword => keyword.includes(term) || term.includes(keyword))))
             .map(([category]) => category)
     );
-    const filtered = allPosts
+    return allPosts
         .map(post => {
             const categoryLabel = CATEGORY_META[post.category]?.label || post.category || '';
             const fields = {
@@ -737,78 +737,179 @@ function filterPostsBySearch(query) {
         .filter(({ score }) => score > 0)
         .sort((a, b) => b.score - a.score || new Date(b.post.created_at) - new Date(a.post.created_at))
         .map(({ post }) => post);
+}
+
+function filterPostsBySearch(query) {
+    const container = document.getElementById('postsContainer');
+    if (!query) { displayPostsByFilter(currentFilter); return; }
+
+    const filtered = getPostsMatchingSearch(query);
 
     container.innerHTML = '';
     if (!filtered.length) {
-        container.innerHTML = `<p style="text-align:center;color:#636e72;padding:40px;">No posts found for "${query}"</p>`;
+        container.innerHTML = `<p style="text-align:center;color:#636e72;padding:40px;">No posts found for "${escapeHtml(query)}"</p>`;
         return;
     }
     filtered.forEach(post => container.appendChild(createPostElement(post)));
 }
 
-function getSearchDropdown() {
+function getSearchSuggestionsDropdown() {
     const searchContainer = document.querySelector('.search-container');
     if (!searchContainer) return null;
 
-    let dropdown = searchContainer.querySelector('.search-users-dropdown');
+    let dropdown = searchContainer.querySelector('.search-suggestions-dropdown');
     if (!dropdown) {
         dropdown = document.createElement('div');
-        dropdown.className = 'search-users-dropdown hidden';
+        dropdown.className = 'search-suggestions-dropdown hidden';
+        dropdown.id = 'search-suggestions';
+        dropdown.setAttribute('role', 'listbox');
+        dropdown.setAttribute('aria-label', 'Search suggestions');
         searchContainer.appendChild(dropdown);
+    }
+
+    const input = searchContainer.querySelector('.search-input');
+    if (input) {
+        input.setAttribute('aria-controls', dropdown.id);
+        input.setAttribute('aria-expanded', String(!dropdown.classList.contains('hidden')));
     }
     return dropdown;
 }
 
-function hideUserSearchResults() {
-    const dropdown = getSearchDropdown();
+function hideSearchSuggestions() {
+    const dropdown = getSearchSuggestionsDropdown();
     if (!dropdown) return;
+    userSearchRequestToken += 1;
     dropdown.classList.add('hidden');
     dropdown.innerHTML = '';
+    const input = document.querySelector('.search-input');
+    input?.setAttribute('aria-expanded', 'false');
+    input?.removeAttribute('aria-activedescendant');
 }
 
-function renderUserSearchResults(users, queryText) {
-    const dropdown = getSearchDropdown();
+function renderSearchSuggestions(posts, users, queryText) {
+    const dropdown = getSearchSuggestionsDropdown();
     if (!dropdown) return;
 
-    if (!users.length) {
-        dropdown.innerHTML = `<div class="search-user-empty">No users found for "${escapeHtml(queryText)}"</div>`;
-        dropdown.classList.remove('hidden');
+    if (!queryText) {
+        hideSearchSuggestions();
         return;
     }
 
-    dropdown.innerHTML = users.map((u) => {
-        const displayName = u.full_name || u.username || 'GC Student';
-        const subtitle = `${u.username ? '@' + u.username : 'gc_student'}${u.course ? ' • ' + u.course : ''}`;
+    const postSuggestions = posts.slice(0, 6).map(post => {
+        const title = escapeHtml(post.title || 'Untitled post');
+        const category = escapeHtml(CATEGORY_META[post.category]?.label || post.category || 'Wellness');
+        const author = escapeHtml(post.user?.full_name || post.user?.username || 'GC FitShare member');
         return `
-            <button class="search-user-item" type="button" data-user-id="${u.id}">
-                <div class="search-user-avatar">${escapeHtml(displayName.slice(0, 1).toUpperCase())}</div>
-                <div class="search-user-meta">
-                    <div class="search-user-name search-user-name-row">${escapeHtml(displayName)}${u.is_expert && typeof getExpertUserBadgeSvg === 'function' ? getExpertUserBadgeSvg(u.id, 18) : (u.is_expert ? ' <span class="search-user-expert">Expert</span>' : '')}${u.is_admin && typeof getAdminUserBadgeHtml === 'function' ? getAdminUserBadgeHtml(`s-${u.id}`, 18) : (u.is_admin ? ' <span class="search-user-admin">Admin</span>' : '')}</div>
-                    <div class="search-user-sub">${escapeHtml(subtitle)}</div>
-                </div>
+            <button class="search-post-item" type="button" role="option" aria-selected="false" data-post-id="${escapeHtml(String(post.id || ''))}">
+                <svg class="search-suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+                <span class="search-suggestion-meta">
+                    <span class="search-suggestion-title">${title}</span>
+                    <span class="search-suggestion-sub">${category} · ${author}</span>
+                </span>
+                <span class="search-suggestion-kind">Post</span>
             </button>
         `;
     }).join('');
 
+    const userSuggestions = users.map(user => {
+        const displayName = user.full_name || user.username || 'GC Student';
+        const subtitle = `${user.username ? '@' + user.username : 'gc_student'}${user.course ? ' • ' + user.course : ''}`;
+        const expertBadge = user.is_expert && typeof getExpertUserBadgeSvg === 'function'
+            ? getExpertUserBadgeSvg(user.id, 18)
+            : (user.is_expert ? ' <span class="search-user-expert">Expert</span>' : '');
+        const adminBadge = user.is_admin && typeof getAdminUserBadgeHtml === 'function'
+            ? getAdminUserBadgeHtml(`s-${user.id}`, 18)
+            : (user.is_admin ? ' <span class="search-user-admin">Admin</span>' : '');
+        return `
+            <button class="search-user-item" type="button" role="option" aria-selected="false" data-user-id="${escapeHtml(String(user.id || ''))}">
+                <div class="search-user-avatar">${escapeHtml(displayName.slice(0, 1).toUpperCase())}</div>
+                <div class="search-user-meta">
+                    <div class="search-user-name search-user-name-row">${escapeHtml(displayName)}${expertBadge}${adminBadge}</div>
+                    <div class="search-user-sub">${escapeHtml(subtitle)}</div>
+                </div>
+                <span class="search-suggestion-kind">Person</span>
+            </button>
+        `;
+    }).join('');
+
+    const groups = [];
+    if (postSuggestions) {
+        groups.push(`<div class="search-suggestion-group" role="group" aria-label="Matching posts"><div class="search-suggestion-heading">Posts</div>${postSuggestions}</div>`);
+    }
+    if (userSuggestions) {
+        groups.push(`<div class="search-suggestion-group" role="group" aria-label="Matching people"><div class="search-suggestion-heading">People</div>${userSuggestions}</div>`);
+    }
+    if (!groups.length) {
+        groups.push('<div class="search-user-empty">No related posts or people found. Press Enter to search posts.</div>');
+    }
+
+    dropdown.innerHTML = groups.join('');
     dropdown.classList.remove('hidden');
-    dropdown.querySelectorAll('.search-user-item').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const userId = btn.getAttribute('data-user-id');
+    document.querySelector('.search-input')?.setAttribute('aria-expanded', 'true');
+
+    dropdown.querySelectorAll('.search-post-item').forEach(button => {
+        button.addEventListener('click', () => {
+            const postId = button.getAttribute('data-post-id');
+            const post = allPosts.find(item => String(item.id) === postId);
+            if (!post) return;
+            const input = document.querySelector('.search-input');
+            if (input) input.value = post.title || '';
+            filterPostsBySearch(post.title || queryText);
+            hideSearchSuggestions();
+        });
+    });
+
+    dropdown.querySelectorAll('.search-user-item').forEach(button => {
+        button.addEventListener('click', () => {
+            const userId = button.getAttribute('data-user-id');
             if (!userId) return;
-            hideUserSearchResults();
+            hideSearchSuggestions();
             navigateToUserProfile(userId);
         });
     });
 }
 
+function moveSearchSuggestionSelection(direction) {
+    const dropdown = getSearchSuggestionsDropdown();
+    const suggestions = [...(dropdown?.querySelectorAll('[role="option"]') || [])];
+    if (!suggestions.length) return false;
+
+    suggestions.forEach((option, index) => {
+        option.id = `search-suggestion-${index}`;
+    });
+    const activeIndex = suggestions.findIndex(option => option.getAttribute('aria-selected') === 'true');
+    const nextIndex = activeIndex === -1
+        ? (direction > 0 ? 0 : suggestions.length - 1)
+        : (activeIndex + direction + suggestions.length) % suggestions.length;
+
+    suggestions.forEach((option, index) => {
+        const isSelected = index === nextIndex;
+        option.setAttribute('aria-selected', String(isSelected));
+        option.classList.toggle('is-active', isSelected);
+    });
+    document.querySelector('.search-input')?.setAttribute('aria-activedescendant', suggestions[nextIndex].id);
+    return true;
+}
+
+function submitFeedSearch() {
+    const input = document.querySelector('.search-input');
+    if (!input) return;
+    filterPostsBySearch(input.value.trim());
+    hideSearchSuggestions();
+}
+
 async function searchUsers(query) {
+    const rawQuery = String(query ?? '').trim();
     const queryText =
         typeof sanitizeUserSearchForOrClause === 'function'
-            ? sanitizeUserSearchForOrClause(query)
-            : String(query ?? '').trim();
+            ? sanitizeUserSearchForOrClause(rawQuery)
+            : rawQuery;
     if (!queryText || queryText.length < 2) {
+        userSearchRequestToken += 1;
         userSearchResults = [];
-        hideUserSearchResults();
+        if (searchSuggestionQuery === rawQuery) {
+            renderSearchSuggestions(postSearchResults, [], rawQuery);
+        }
         return;
     }
 
@@ -826,16 +927,22 @@ async function searchUsers(query) {
         userSearchResults = data || [];
         const searchAdminSet =
             typeof fetchAdminUserIdsSet === 'function' ? await fetchAdminUserIdsSet(supabase) : new Set();
+        if (requestToken !== userSearchRequestToken) return;
         if (typeof mergeIsAdminFlag === 'function') {
-            userSearchResults.forEach((u) => {
-                u.is_admin = mergeIsAdminFlag(u.id, !!u.is_admin, searchAdminSet);
+            userSearchResults.forEach(user => {
+                user.is_admin = mergeIsAdminFlag(user.id, !!user.is_admin, searchAdminSet);
             });
         }
-        renderUserSearchResults(userSearchResults, queryText);
+        if (searchSuggestionQuery === rawQuery && !getSearchSuggestionsDropdown()?.classList.contains('hidden')) {
+            renderSearchSuggestions(postSearchResults, userSearchResults, rawQuery);
+        }
     } catch (err) {
+        if (requestToken !== userSearchRequestToken) return;
         console.error('User search error:', err);
         userSearchResults = [];
-        hideUserSearchResults();
+        if (searchSuggestionQuery === rawQuery && !getSearchSuggestionsDropdown()?.classList.contains('hidden')) {
+            renderSearchSuggestions(postSearchResults, [], rawQuery);
+        }
     }
 }
 
@@ -2454,27 +2561,46 @@ function setupEventListeners() {
     // search
     const searchInput = document.querySelector('.search-input');
     if (searchInput) {
-        searchInput.addEventListener('input', async (e) => {
+        searchInput.setAttribute('role', 'combobox');
+        searchInput.setAttribute('aria-autocomplete', 'list');
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.setAttribute('autocomplete', 'off');
+        searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
-            filterPostsBySearch(query);
-            await searchUsers(query);
+            searchSuggestionQuery = query;
+            postSearchResults = query ? getPostsMatchingSearch(query).slice(0, 6) : [];
+            userSearchResults = [];
+            renderSearchSuggestions(postSearchResults, [], query);
+            void searchUsers(query);
         });
         searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && userSearchResults.length > 0) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
-                navigateToUserProfile(userSearchResults[0].id);
+                moveSearchSuggestionSelection(e.key === 'ArrowDown' ? 1 : -1);
+                return;
+            }
+            if (e.key === 'Enter') {
+                const dropdown = getSearchSuggestionsDropdown();
+                const selectedSuggestion = dropdown?.querySelector('[role="option"][aria-selected="true"]');
+                if (selectedSuggestion) {
+                    e.preventDefault();
+                    selectedSuggestion.click();
+                    return;
+                }
+                e.preventDefault();
+                submitFeedSearch();
+            } else if (e.key === 'Escape') {
+                hideSearchSuggestions();
             }
         });
     }
     document.querySelector('.search-btn')?.addEventListener('click', () => {
-        if (userSearchResults.length > 0) {
-            navigateToUserProfile(userSearchResults[0].id);
-        }
+        submitFeedSearch();
     });
     document.addEventListener('click', (e) => {
         const searchContainer = document.querySelector('.search-container');
         if (searchContainer && !searchContainer.contains(e.target)) {
-            hideUserSearchResults();
+            hideSearchSuggestions();
         }
     });
 

@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase    = getSupabaseClient();
     currentUser = await checkUserAuthentication();
     if (currentUser) {
+        if (await redirectIncompleteProfileSetup(currentUser)) return;
         if (typeof hydrateAdminNavVisibility === 'function') {
             void hydrateAdminNavVisibility();
         }
@@ -2526,23 +2527,12 @@ function setupEventListeners() {
 
 // ─── Wellness Profile (MVP Feature 1.1) ──────────────────────────────────────
 async function checkAndShowWellnessProfile() {
-    if (localStorage.getItem(getWellnessSkipKey()) === 'true') return;
-    try {
-        const { data: profile } = await supabase
-            .from('wellness_profiles')
-            .select('user_id')
-            .eq('user_id', currentUser.id)
-            .single();
-        if (profile) {
-            localStorage.setItem(getWellnessSkipKey(), 'true');
-            return; // already set up
-        }
-        document.getElementById('wellnessProfileModal')?.classList.remove('hidden');
-        // Show only once for this user account.
-        localStorage.setItem(getWellnessSkipKey(), 'true');
-    } catch {
-        // table might not exist yet — silently skip
-    }
+    const setupStatus = await getRequiredProfileSetupStatus(currentUser);
+    // Legacy profiles with saved username and course are already complete. New
+    // accounts now complete Lifestyle & For You on the Profile page, where the
+    // sequence is persisted and cannot be skipped.
+    if (!setupStatus.checked || setupStatus.phase === 'complete') return;
+    await redirectIncompleteProfileSetup(currentUser);
 }
 
 async function saveWellnessProfile() {
@@ -2560,7 +2550,7 @@ async function saveWellnessProfile() {
         typeof readLifestyleExperienceStory === 'function' ? readLifestyleExperienceStory('feed') : null;
 
     try {
-        await supabase.from('wellness_profiles').upsert({
+        const { error } = await supabase.from('wellness_profiles').upsert({
             user_id: currentUser.id,
             fitness_goals: goals,
             activity_level: activityLevel,
@@ -2571,6 +2561,7 @@ async function saveWellnessProfile() {
             experience_story,
             updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
+        if (error) throw error;
 
         localStorage.setItem(getWellnessSkipKey(), 'true');
         document.getElementById('wellnessProfileModal')?.classList.add('hidden');

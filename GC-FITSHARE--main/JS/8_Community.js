@@ -29,6 +29,7 @@ async function initCommunity() {
         }
 
         await ensureUserExists(currentUser);
+        if (await redirectIncompleteProfileSetup(currentUser)) return;
         isAdmin = await checkAdminStatus();
 
         try {

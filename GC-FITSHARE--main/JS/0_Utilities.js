@@ -145,6 +145,111 @@ async function ensureUserExists(user) {
 }
 
 /**
+ * Required first-time profile data lives in the existing users row. A profile
+ * becomes eligible for the regular app only after both fields were persisted.
+ * Privileged accounts keep their existing role-specific entry flow.
+ */
+function hasRequiredProfileInformation(profile) {
+    return Boolean(
+        profile &&
+        typeof profile.username === 'string' && profile.username.trim() &&
+        typeof profile.course === 'string' && profile.course.trim()
+    );
+}
+
+function getProfileSetupStage(profile) {
+    let visibility = profile?.profile_visibility;
+    if (typeof visibility === 'string') {
+        try {
+            visibility = JSON.parse(visibility);
+        } catch {
+            visibility = null;
+        }
+    }
+    const stage = visibility?.profile_setup_stage;
+    return stage === 'lifestyle' || stage === 'complete' ? stage : null;
+}
+
+async function getRequiredProfileSetupStatus(user) {
+    if (!user?.id) {
+        return { checked: false, required: false, profile: null };
+    }
+
+    const client = getSupabaseClient();
+    if (!client) {
+        return { checked: false, required: false, profile: null };
+    }
+
+    try {
+        const { data: profile, error: profileError } = await client
+            .from('users')
+            .select('id, username, course, profile_visibility, is_admin, is_expert')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (profileError) {
+            console.warn('Profile setup status could not be loaded:', profileError.message || profileError);
+            return { checked: false, required: false, profile: null };
+        }
+
+        if (!profile) {
+            return { checked: true, required: true, phase: 'profile', profile: null };
+        }
+
+        if (profile.is_admin || profile.is_expert) {
+            return { checked: true, required: false, phase: 'complete', profile };
+        }
+
+        const { data: adminRecord, error: adminError } = await client
+            .from('admins')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (adminError) {
+            // Do not send a potentially privileged account into student setup
+            // when its role cannot be verified. A later authenticated page load
+            // will retry this check.
+            console.warn('Profile setup role check could not be loaded:', adminError.message || adminError);
+            return { checked: false, required: false, profile };
+        }
+
+        const savedStage = getProfileSetupStage(profile);
+        const phase = adminRecord
+            ? 'complete'
+            : savedStage === 'lifestyle'
+              ? 'lifestyle'
+              : savedStage === 'complete' || hasRequiredProfileInformation(profile)
+                ? 'complete'
+                : 'profile';
+
+        return { checked: true, required: phase !== 'complete', phase, profile };
+    } catch (error) {
+        console.warn('Profile setup status failed:', error?.message || error);
+        return { checked: false, required: false, profile: null };
+    }
+}
+
+/**
+ * Keep incomplete non-privileged accounts on their own Profile page. The
+ * Profile page opens the existing Edit Profile modal and completes the flow.
+ */
+async function redirectIncompleteProfileSetup(user) {
+    const status = await getRequiredProfileSetupStatus(user);
+    if (!status.checked || !status.required) return false;
+
+    const currentUrl = new URL(window.location.href);
+    const isProfilePage = /\/HTML\/3_Profile\.html$/i.test(currentUrl.pathname);
+    const requestedProfileId = currentUrl.searchParams.get('user');
+    const isOwnProfilePage = isProfilePage && (!requestedProfileId || requestedProfileId === user.id);
+
+    if (isOwnProfilePage) return false;
+
+    window.location.replace(`/HTML/3_Profile.html?setup=${encodeURIComponent(status.phase || 'profile')}`);
+    return true;
+}
+
+/**
  * Returns whether the user may create posts (not suspended / ban expired).
  * Clears is_suspended when a timed suspension has ended.
  * @param {*} supabase Supabase client from `getSupabaseClient()`

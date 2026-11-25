@@ -83,6 +83,13 @@ async function handleLogin() {
             // Make sure user record exists in our users table
             await ensureUserExists(data.user);
 
+            // New or incomplete student profiles continue in the existing
+            // Profile editor before the rest of the application is available.
+            const setupStatus = await getRequiredProfileSetupStatus(data.user);
+            const nextPage = setupStatus.checked && setupStatus.required
+                ? "/HTML/3_Profile.html?setup=required"
+                : "/HTML/2_Main_Feed.html";
+
             if (typeof maybeShowSuspensionNoticeOnLogin === 'function') {
                 await maybeShowSuspensionNoticeOnLogin(supabaseClient, data.user.id);
             }
@@ -95,7 +102,7 @@ async function handleLogin() {
 
             // Redirect after short delay
             setTimeout(() => {
-                window.location.href = "/HTML/2_Main_Feed.html";
+                window.location.href = nextPage;
             }, 1500);
         }
     } catch (error) {

@@ -30,6 +30,8 @@ async function initGuidanceCounselling() {
             return;
         }
 
+        if (await redirectIncompleteProfileSetup(currentUser)) return;
+
         // Check if user is admin
         isAdmin = await checkAdminStatus();
 

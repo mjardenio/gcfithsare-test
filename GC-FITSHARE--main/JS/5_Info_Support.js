@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase = getSupabaseClient();
     currentUser = await checkUserAuthentication();
 
+    if (currentUser && await redirectIncompleteProfileSetup(currentUser)) return;
+
     setupEventListeners();
     if (!currentUser) {
         console.warn('Auth unavailable during page init; skipping redirect to avoid logout loops.');

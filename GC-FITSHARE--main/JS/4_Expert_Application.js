@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    if (await redirectIncompleteProfileSetup(currentUser)) return;
+
     const isAdmin = await fetchIsCurrentUserAdmin();
     if (isAdmin) {
         showExpertApplicationAdminLocked();

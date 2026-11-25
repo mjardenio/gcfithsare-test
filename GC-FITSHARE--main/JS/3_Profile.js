@@ -32,6 +32,8 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 let profileViewerIsExpert = false;
 let profileViewerIsAdmin = false;
 let profileExpertWeeklyRemaining = 0;
+let profileSetupRequired = false;
+let profileSetupPhase = null;
 /** public.admins user_ids; merged with users.is_admin for badges */
 let profileAdminUserIdSet = new Set();
 
@@ -159,6 +161,9 @@ function normalizeProfileVisibility(raw) {
     Object.keys(out).forEach((k) => {
         if (obj[k] === 'public' || obj[k] === 'private') out[k] = obj[k];
     });
+    if (obj.profile_setup_stage === 'lifestyle' || obj.profile_setup_stage === 'complete') {
+        out.profile_setup_stage = obj.profile_setup_stage;
+    }
     return out;
 }
 
@@ -223,6 +228,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase    = getSupabaseClient();
     currentUser = await checkUserAuthentication();
     if (currentUser) {
+        if (await redirectIncompleteProfileSetup(currentUser)) return;
+        await ensureUserExists(currentUser);
         // Keep the edit modal outside the profile section's overflow clipping.
         const editProfileModal = document.getElementById('editProfileModal');
         if (editProfileModal) document.body.appendChild(editProfileModal);
@@ -231,12 +238,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyProfileViewMode();
         await loadUserProfile();
         setupEventListeners();
+        await beginRequiredProfileSetup();
     }
 });
 
 function getViewedUserIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return params.get('user');
+}
+
+async function beginRequiredProfileSetup() {
+    if (!isOwnProfile || !currentUser?.id) return;
+
+    const status = await getRequiredProfileSetupStatus(currentUser);
+    if (!status.checked || !status.required) return;
+
+    profileSetupRequired = true;
+    profileSetupPhase = status.phase || 'profile';
+    setRequiredProfileSetupControls(true);
+    openEditProfileModal(profileSetupPhase === 'lifestyle' ? 'lifestyle' : 'edit');
+    showAppAlert(
+        'Complete your profile',
+        profileSetupPhase === 'lifestyle'
+            ? 'Save your Lifestyle & For You preferences to finish setup.'
+            : 'Add a username and course before setting up Lifestyle & For You.',
+        'info'
+    );
+}
+
+function setRequiredProfileSetupControls(required) {
+    const closeButton = document.getElementById('closeEditProfileModal');
+    const cancelButton = document.getElementById('cancelEditProfile');
+    const lifestyleCloseButton = document.getElementById('closeLifestyleProfileModal');
+    const lifestyleCancelButton = document.getElementById('cancelLifestyleProfile');
+    const usernameInput = document.getElementById('editUsername');
+    const courseInput = document.getElementById('editCourse');
+
+    if (closeButton) {
+        closeButton.hidden = required;
+        closeButton.disabled = required;
+    }
+    if (cancelButton) {
+        cancelButton.hidden = required;
+        cancelButton.disabled = required;
+    }
+    if (lifestyleCloseButton) {
+        lifestyleCloseButton.hidden = required;
+        lifestyleCloseButton.disabled = required;
+    }
+    if (lifestyleCancelButton) {
+        lifestyleCancelButton.hidden = required;
+        lifestyleCancelButton.disabled = required;
+    }
+    if (usernameInput) usernameInput.required = required;
+    if (courseInput) courseInput.required = required;
+}
+
+function blockIncompleteProfileNavigation(event) {
+    if (!profileSetupRequired) return;
+    event.preventDefault();
+    const message = profileSetupPhase === 'lifestyle'
+        ? 'Save your Lifestyle & For You preferences before leaving this page.'
+        : 'Save a username and course before leaving this page.';
+    showAppAlert('Profile setup required', message, 'info');
 }
 
 // ─── Load Profile ─────────────────────────────────────────────────────────────
@@ -1510,6 +1574,13 @@ async function saveProfile() {
 
     if (!username) {
         showAppAlert('Missing Username', 'Username is required', 'error');
+        document.getElementById('editUsername')?.focus();
+        return;
+    }
+
+    if (profileSetupRequired && !course) {
+        showAppAlert('Missing Course', 'Course / Program is required', 'error');
+        document.getElementById('editCourse')?.focus();
         return;
     }
 
@@ -1531,14 +1602,35 @@ async function saveProfile() {
         weight: document.getElementById('visWeight')?.value || 'private',
         email: document.getElementById('visEmail')?.value || 'private'
     });
+    if (profileSetupRequired) {
+        userProfile.profile_visibility.profile_setup_stage = 'lifestyle';
+    }
 
     try {
-        await updateUserProfile();
-        await saveWellnessProfile(wellnessInterests, wellnessGoals, wellnessBio);
+        await updateUserProfile({ requireProfileSetupStage: profileSetupRequired });
+        if (!profileSetupRequired) {
+            try {
+            await saveWellnessProfile(wellnessInterests, wellnessGoals, wellnessBio);
+            } catch (wellnessError) {
+                // Wellness preferences remain optional in the normal Edit Profile flow.
+                console.warn('Optional wellness preferences were not saved:', wellnessError?.message || wellnessError);
+            }
+        }
         await loadWellnessProfile();
-        closeEditProfileModal();
         displayUserProfile();
         saveBirthdayToStorage(currentUser.id, userProfile.birthday);
+
+        if (profileSetupRequired) {
+            closeEditProfileModal({ force: true });
+            const url = new URL(window.location.href);
+            url.searchParams.set('setup', 'lifestyle');
+            window.history.replaceState({}, '', url);
+            profileSetupPhase = 'lifestyle';
+            openEditProfileModal('lifestyle');
+            return;
+        }
+
+        closeEditProfileModal();
         showAppAlert('Success', 'Profile updated successfully!', 'success');
     } catch (err) {
         console.error('Save profile error:', err);
@@ -1547,7 +1639,7 @@ async function saveProfile() {
 }
 
 // ─── Update in DB ─────────────────────────────────────────────────────────────
-async function updateUserProfile() {
+async function updateUserProfile(options = {}) {
     const baseUpdate = {
         username:   userProfile.username,
         full_name:  userProfile.full_name,
@@ -1565,24 +1657,27 @@ async function updateUserProfile() {
         profile_visibility: userProfile.profile_visibility
     };
 
-    let { error } = await supabase
+    const writeProfile = (payload) => supabase
         .from('users')
-        .update(withVisibility)
-        .eq('id', currentUser.id);
+        .update(payload)
+        .eq('id', currentUser.id)
+        .select('id')
+        .maybeSingle();
 
-    if (error) {
-        let retry = await supabase
-            .from('users')
-            .update(baseUpdate)
-            .eq('id', currentUser.id);
-        if (retry.error) {
+    let result = await writeProfile(withVisibility);
+
+    if (result.error || !result.data) {
+        if (options.requireProfileSetupStage) {
+            throw result.error || new Error('Profile setup status was not saved.');
+        }
+        let retry = await writeProfile(baseUpdate);
+        if (retry.error || !retry.data) {
             const noBirthdayUpdate = { ...baseUpdate };
             delete noBirthdayUpdate.birthday;
-            retry = await supabase
-                .from('users')
-                .update(noBirthdayUpdate)
-                .eq('id', currentUser.id);
-            if (retry.error) throw retry.error;
+            retry = await writeProfile(noBirthdayUpdate);
+            if (retry.error || !retry.data) {
+                throw retry.error || result.error || new Error('Profile was not saved.');
+            }
         }
         saveVisibilityToStorage(currentUser.id, userProfile.profile_visibility);
     } else {
@@ -1593,31 +1688,27 @@ async function updateUserProfile() {
 }
 
 async function saveWellnessProfile(interests, goals, bio) {
-    if (!currentUser?.id) return;
-    try {
-        const prev = userWellnessProfile || {};
-        const personality_snapshot =
-            typeof readLifestylePersonalitySnapshot === 'function' ? readLifestylePersonalitySnapshot('profile') : {};
-        const experience_story =
-            typeof readLifestyleExperienceStory === 'function' ? readLifestyleExperienceStory('profile') : null;
-        const payload = {
-            user_id: currentUser.id,
-            content_interests: Array.isArray(interests) ? interests : [],
-            fitness_goals: Array.isArray(goals) ? goals : [],
-            bio: bio || null,
-            activity_level: prev.activity_level ?? null,
-            health_preferences: Array.isArray(prev.health_preferences) ? prev.health_preferences : [],
-            personality_snapshot,
-            experience_story,
-            updated_at: new Date().toISOString()
-        };
-        const { error } = await supabase
-            .from('wellness_profiles')
-            .upsert(payload, { onConflict: 'user_id' });
-        if (error) throw error;
-    } catch (err) {
-        console.warn('Saving wellness profile failed:', err?.message || err);
-    }
+    if (!currentUser?.id) throw new Error('No authenticated user.');
+    const prev = userWellnessProfile || {};
+    const personality_snapshot =
+        typeof readLifestylePersonalitySnapshot === 'function' ? readLifestylePersonalitySnapshot('profile') : {};
+    const experience_story =
+        typeof readLifestyleExperienceStory === 'function' ? readLifestyleExperienceStory('profile') : null;
+    const payload = {
+        user_id: currentUser.id,
+        content_interests: Array.isArray(interests) ? interests : [],
+        fitness_goals: Array.isArray(goals) ? goals : [],
+        bio: bio || null,
+        activity_level: prev.activity_level ?? null,
+        health_preferences: Array.isArray(prev.health_preferences) ? prev.health_preferences : [],
+        personality_snapshot,
+        experience_story,
+        updated_at: new Date().toISOString()
+    };
+    const { error } = await supabase
+        .from('wellness_profiles')
+        .upsert(payload, { onConflict: 'user_id' });
+    if (error) throw error;
 }
 
 // ─── Avatar Upload ────────────────────────────────────────────────────────────
@@ -1722,7 +1813,14 @@ function openEditProfileModal(mode = 'edit') {
     target?.classList.add('active');
 }
 
-function closeEditProfileModal() {
+function closeEditProfileModal(options = {}) {
+    if (profileSetupRequired && !options.force) {
+        const message = profileSetupPhase === 'lifestyle'
+            ? 'Save your Lifestyle & For You preferences before continuing.'
+            : 'Save a username and course before continuing.';
+        showAppAlert('Profile setup required', message, 'info');
+        return;
+    }
     document.getElementById('editProfileModal').classList.remove('active');
     document.getElementById('lifestyleProfileModal')?.classList.remove('active');
 }
@@ -1731,11 +1829,29 @@ async function saveLifestylePreferences() {
     const interests = Array.from(document.querySelectorAll('input[name="profile_content_interests"]:checked')).map((el) => el.value);
     const goals = Array.from(document.querySelectorAll('input[name="profile_fitness_goals"]:checked')).map((el) => el.value);
     const bio = document.getElementById('editWellnessBio')?.value?.trim() || null;
-    await saveWellnessProfile(interests, goals, bio);
-    await loadWellnessProfile();
-    closeEditProfileModal();
-    displayUserProfile();
-    showAppAlert('Success', 'Lifestyle preferences updated.', 'success');
+    try {
+        await saveWellnessProfile(interests, goals, bio);
+        if (profileSetupRequired) {
+            userProfile.profile_visibility = {
+                ...normalizeProfileVisibility(userProfile.profile_visibility),
+                profile_setup_stage: 'complete'
+            };
+            await updateUserProfile({ requireProfileSetupStage: true });
+            profileSetupRequired = false;
+            profileSetupPhase = 'complete';
+            setRequiredProfileSetupControls(false);
+            const url = new URL(window.location.href);
+            url.searchParams.delete('setup');
+            window.history.replaceState({}, '', url);
+        }
+        await loadWellnessProfile();
+        closeEditProfileModal({ force: true });
+        displayUserProfile();
+        showAppAlert('Success', 'Lifestyle preferences updated.', 'success');
+    } catch (err) {
+        console.error('Lifestyle preferences save error:', err);
+        showAppAlert('Save Failed', 'Lifestyle preferences could not be saved. Please try again.', 'error');
+    }
 }
 
 function updateBioCharCount() {
@@ -2108,6 +2224,20 @@ function setupEventListeners() {
         if (e.target.id === 'fullPostModal') closeFullPostModal();
     });
     document.getElementById('closeFullPostModal')?.addEventListener('click', closeFullPostModal);
+
+    document.querySelectorAll('.nav-menu a').forEach((link) => {
+        link.addEventListener('click', blockIncompleteProfileNavigation);
+    });
+    document.addEventListener('keydown', (event) => {
+        if (profileSetupRequired && event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            const message = profileSetupPhase === 'lifestyle'
+                ? 'Save your Lifestyle & For You preferences before continuing.'
+                : 'Save a username and course before continuing.';
+            showAppAlert('Profile setup required', message, 'info');
+        }
+    });
 
     document.addEventListener('click', () => {
         document.querySelectorAll('.menu-dropdown.active').forEach(m => m.classList.remove('active'));

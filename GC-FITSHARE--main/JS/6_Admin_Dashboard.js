@@ -642,6 +642,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        if (await redirectIncompleteProfileSetup(currentUser)) return;
+
         const isAdmin = await ensureAdminAccess();
         if (!isAdmin) return;
         initUserDirectory();

@@ -1058,13 +1058,31 @@ function handleReadMoreClick(e) {
 
 async function openProfilePostDetail(postId) {
     try {
-        const { data, error } = await supabase
+        const { data: post, error } = await supabase
             .from('posts')
-            .select('id, title, body')
+            .select('id, title, body, image_url, created_at, user_id, category, hashtags, expert_endorsed_at, expert_endorsed_by, is_expert_approved, status')
             .eq('id', postId)
             .maybeSingle();
         if (error) throw error;
-        if (data) viewFullPost(data.id, data.title, data.body);
+        if (!post) return;
+
+        const [userResult, upvotesResult, downvotesResult, commentsResult, bookmarkResult] = await Promise.all([
+            supabase.from('users').select('id, full_name, username, course, avatar_url, is_expert, is_admin').eq('id', post.user_id).maybeSingle(),
+            supabase.from('votes').select('*', { count: 'exact', head: true }).eq('post_id', post.id).eq('vote_type', 'up'),
+            supabase.from('votes').select('*', { count: 'exact', head: true }).eq('post_id', post.id).eq('vote_type', 'down'),
+            supabase.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id).eq('is_deleted', false),
+            currentUser?.id
+                ? supabase.from('bookmarks').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
+                : Promise.resolve({ data: null, error: null })
+        ]);
+
+        mergeLoadedPostUser(post, userResult.data);
+        viewFullPost(post, {
+            upvotes: upvotesResult.count || 0,
+            downvotes: downvotesResult.count || 0,
+            comments: commentsResult.count || 0,
+            isBookmarked: Boolean(bookmarkResult.data)
+        });
     } catch (error) {
         console.error('Post detail error:', error);
     }
@@ -1072,7 +1090,9 @@ async function openProfilePostDetail(postId) {
 
 async function handleToggleCommentsClick() {
     const postId = this.getAttribute('data-post-id');
-    const section = document.querySelector(`.post-comments[data-post-id="${postId}"]`);
+    const modal = this.closest('.full-post-modal');
+    const section = modal?.querySelector(`.post-comments[data-post-id="${postId}"]`) ||
+        document.querySelector(`.post-comments[data-post-id="${postId}"]`);
     const container = section?.querySelector('.comments-container');
     if (!section || !container) return;
 
@@ -1159,7 +1179,7 @@ async function handleToggleCommentsClick() {
 
         container.innerHTML = `${commentFormHtml}<div class="profile-comments-list">${commentsHtml}</div>`;
         container.querySelector('.profile-comment-submit-btn')?.addEventListener('click', () => {
-            submitProfileComment(postId);
+            submitProfileComment(postId, container);
         });
     } catch (err) {
         console.error('Error loading profile post comments:', err);
@@ -1167,7 +1187,7 @@ async function handleToggleCommentsClick() {
     }
 }
 
-async function submitProfileComment(postId) {
+async function submitProfileComment(postId, commentsContainer = null) {
     if (!currentUser?.id) return;
     if (typeof checkPostingAllowed === 'function') {
         const postingCheck = await checkPostingAllowed(supabase, currentUser.id);
@@ -1188,7 +1208,8 @@ async function submitProfileComment(postId) {
         }
     }
 
-    const input = document.getElementById(`profile-comment-input-${postId}`);
+    const input = commentsContainer?.querySelector(`#profile-comment-input-${postId}`) ||
+        document.getElementById(`profile-comment-input-${postId}`);
     const content = input?.value?.trim() || '';
     if (!content) {
         showAppAlert('Missing Comment', 'Please write a comment.', 'error');
@@ -1233,17 +1254,17 @@ async function submitProfileComment(postId) {
         if (error) throw error;
 
         if (input) input.value = '';
-        const cardEl = document.querySelector(`.post-card[data-post-id="${postId}"]`);
-        const countEl = cardEl?.querySelector('.comment-count');
-        if (countEl) {
+        document.querySelectorAll(`.post-card[data-post-id="${postId}"] .comment-count`).forEach((countEl) => {
             const current = parseInt(countEl.textContent || '0', 10);
             countEl.textContent = String(current + 1);
-        }
+        });
 
-        const triggerBtn = cardEl?.querySelector('.comment-btn');
-        if (triggerBtn) {
-            await handleToggleCommentsClick.call(triggerBtn);
-        }
+        const modal = commentsContainer?.closest('.full-post-modal');
+        const triggerBtn = modal?.querySelector('.comment-btn') ||
+            document.querySelector(`.post-card[data-post-id="${postId}"] .comment-btn`);
+        const section = modal?.querySelector(`.post-comments[data-post-id="${postId}"]`);
+        if (section) section.style.display = 'none';
+        if (triggerBtn) await handleToggleCommentsClick.call(triggerBtn);
     } catch (err) {
         console.error('Profile comment submit error:', err);
         showAppAlert('Comment Failed', 'Failed to post comment. Please try again.', 'error');
@@ -2173,14 +2194,78 @@ async function loadFollowersList() {
 }
 
 // ─── View Full Post ───────────────────────────────────────────────────────────
-function viewFullPost(postId, title, body) {
+function viewFullPost(post, counts = {}) {
     const modal = document.getElementById('fullPostModal');
-    const titleEl = document.getElementById('fullPostTitle');
-    const bodyEl = document.getElementById('fullPostBody');
+    const contentEl = document.getElementById('fullPostContent');
+    if (!modal || !contentEl || !post?.id) return;
 
-    if (!modal || !titleEl || !bodyEl) return;
-    titleEl.textContent = title || 'Untitled Post';
-    bodyEl.textContent = body || '';
+    const displayName = post.user?.full_name || post.user?.username || 'GC Student';
+    const initials = displayName.split(' ').map((name) => name[0]).join('').toUpperCase().slice(0, 2) || 'GC';
+    const course = post.user?.course || '';
+    const authorIsExpert = !!post.user?.is_expert;
+    const authorIsAdmin = !!post.user?.is_admin;
+    const expertBadge = authorIsExpert && typeof getExpertUserBadgeSvg === 'function'
+        ? getExpertUserBadgeSvg(`profile-full-${post.id}`, 18)
+        : (authorIsExpert ? '<span class="expert-badge-fallback">Expert</span>' : '');
+    const adminBadge = authorIsAdmin && typeof getAdminUserBadgeHtml === 'function'
+        ? getAdminUserBadgeHtml(`profile-full-${post.id}`, 18)
+        : (authorIsAdmin ? '<span class="admin-badge-fallback">Admin</span>' : '');
+    const expertApprovedBadge = (post.expert_endorsed_at || post.is_expert_approved) && typeof getPostExpertApprovedBadgeHtml === 'function'
+        ? getPostExpertApprovedBadgeHtml(`profile-full-${post.id}`)
+        : '';
+    const bookmarkedClass = counts.isBookmarked ? ' bookmarked' : '';
+
+    contentEl.innerHTML = `
+        <div class="full-post-header">
+            <div class="post-author-info">
+                ${buildPostAvatarHtml(post.user, initials)}
+                <div class="post-meta">
+                    <div class="post-author"><strong>${escapeHtml(displayName)}</strong>${expertBadge}${adminBadge}${course ? `<span class="post-course">• ${escapeHtml(course)}</span>` : ''}</div>
+                    <div class="post-date">${formatDate(post.created_at)}</div>
+                </div>
+            </div>
+            ${post.category ? `<div class="post-category">${getCategoryBadge(post.category)}</div>` : ''}
+        </div>
+        ${expertApprovedBadge}
+        <div class="full-post-body">
+            <h3 class="full-post-title">${escapeHtml(post.title || 'Untitled Post')}</h3>
+            ${post.image_url ? `<img src="${escapeHtml(post.image_url)}" alt="Post image" class="full-post-image">` : ''}
+            <div class="full-post-text">${escapeHtml(post.body || '')}</div>
+        </div>
+        <div class="full-post-actions">
+            <div class="post-actions" data-post-id="${post.id}">
+                <button type="button" class="post-action-btn upvote-btn" data-post-id="${post.id}" title="Upvote">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                    <span class="upvote-count">${counts.upvotes || 0}</span>
+                </button>
+                <button type="button" class="post-action-btn downvote-btn" data-post-id="${post.id}" title="Downvote">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+                    <span class="downvote-count">${counts.downvotes || 0}</span>
+                </button>
+                <button type="button" class="post-action-btn comment-btn" data-post-id="${post.id}" title="Comment">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="comment-count">${counts.comments || 0}</span>
+                </button>
+                <button type="button" class="post-action-btn bookmark-btn${bookmarkedClass}" data-post-id="${post.id}" title="Bookmark">
+                    <svg viewBox="0 0 24 24" fill="${counts.isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div class="full-post-comments">
+            <div class="post-comments" data-post-id="${post.id}" style="display:none;">
+                <div class="comments-container"></div>
+            </div>
+        </div>
+    `;
+
+    const actionsEl = contentEl.querySelector('.full-post-actions');
+    actionsEl?.querySelector('.upvote-btn')?.addEventListener('click', () => handleVoteClick(post.id, 'up', actionsEl));
+    actionsEl?.querySelector('.downvote-btn')?.addEventListener('click', () => handleVoteClick(post.id, 'down', actionsEl));
+    actionsEl?.querySelector('.bookmark-btn')?.addEventListener('click', () => toggleBookmark(post.id, actionsEl));
+    actionsEl?.querySelector('.comment-btn')?.addEventListener('click', function () {
+        void handleToggleCommentsClick.call(this);
+    });
+
     modal.classList.add('active');
 }
 

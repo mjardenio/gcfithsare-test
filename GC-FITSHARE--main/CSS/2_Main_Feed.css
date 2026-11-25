@@ -323,9 +323,13 @@ body.dark-mode {
     width: 100%;
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
     position: relative;
+}
+
+.search-container:focus-within {
+    z-index: 60;
 }
 
 .search-input {
@@ -350,7 +354,7 @@ body.dark-mode {
     color: var(--primary-color);
 }
 
-.search-users-dropdown {
+.search-suggestions-dropdown {
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
@@ -359,18 +363,34 @@ body.dark-mode {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-    max-height: 320px;
+    max-height: min(58vh, 360px);
     overflow-y: auto;
-    z-index: 50;
+    overscroll-behavior: contain;
+    z-index: 70;
 }
 
-.search-users-dropdown.hidden {
+.search-suggestions-dropdown.hidden {
     display: none;
 }
 
+.search-suggestion-group + .search-suggestion-group {
+    border-top: 1px solid var(--border-color);
+}
+
+.search-suggestion-heading {
+    padding: 9px 12px 5px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.search-post-item,
 .search-user-item {
     width: 100%;
     border: none;
+    border-bottom: 1px solid var(--border-color);
     background: transparent;
     display: flex;
     align-items: center;
@@ -379,15 +399,63 @@ body.dark-mode {
     padding: 10px 12px;
     cursor: pointer;
     transition: var(--transition);
-    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font: inherit;
 }
 
-.search-user-item:last-child {
+.search-suggestion-group > :last-child {
     border-bottom: none;
 }
 
-.search-user-item:hover {
+.search-post-item:hover,
+.search-user-item:hover,
+.search-post-item.is-active,
+.search-user-item.is-active,
+.search-post-item:focus-visible,
+.search-user-item:focus-visible {
     background: rgba(29, 209, 161, 0.08);
+    outline: none;
+}
+
+.search-suggestion-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    color: var(--primary-color);
+}
+
+.search-suggestion-meta {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+
+.search-suggestion-title {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-suggestion-sub {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-suggestion-kind {
+    flex: 0 0 auto;
+    color: var(--text-secondary);
+    font-size: 10px;
+    white-space: nowrap;
 }
 
 .search-user-avatar {
@@ -405,6 +473,7 @@ body.dark-mode {
 }
 
 .search-user-meta {
+    flex: 1 1 auto;
     min-width: 0;
 }
 

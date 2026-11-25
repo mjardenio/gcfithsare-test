@@ -268,10 +268,23 @@ async function beginRequiredProfileSetup() {
     if (!isOwnProfile || !currentUser?.id) return;
 
     const status = await getRequiredProfileSetupStatus(currentUser);
-    if (!status.checked || !status.required) return;
+    const requestedSetup = new URLSearchParams(window.location.search).get('setup');
+    const setupRouteRequested = requestedSetup === 'required' || requestedSetup === 'profile';
+    const profileDetailsMissing = !hasRequiredProfileInformation(userProfile);
+    const shouldOpenRequiredSetup = status.checked
+        ? status.required
+        : setupRouteRequested && profileDetailsMissing;
+
+    // The login flow already establishes that this account needs setup before
+    // it sends the user here. Preserve that requirement when a follow-up
+    // status read is temporarily unavailable, but never reopen the modal for
+    // a profile that already has the required details.
+    if (!shouldOpenRequiredSetup) return;
 
     profileSetupRequired = true;
-    profileSetupPhase = status.phase || 'profile';
+    profileSetupPhase = status.phase === 'lifestyle' || requestedSetup === 'lifestyle'
+        ? 'lifestyle'
+        : 'profile';
     setRequiredProfileSetupControls(true);
     openEditProfileModal(profileSetupPhase === 'lifestyle' ? 'lifestyle' : 'edit');
     showAppAlert(

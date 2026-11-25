@@ -880,8 +880,20 @@ function getCategoryBadge(categoryId) {
 
 function buildPostAvatarHtml(user, initials) {
     const raw = user?.avatar_url ? String(user.avatar_url).trim() : '';
-    if (raw && /^https?:\/\//i.test(raw)) {
-        return `<img class="post-avatar post-avatar-img" src="${escapeHtml(raw)}" alt="" width="45" height="45" loading="lazy" referrerpolicy="no-referrer">`;
+    let url = raw;
+    if (raw && !/^https?:\/\//i.test(raw)) {
+        const storagePrefix = /^\/?storage\/v1\/object\/public\/profile-pictures\//i;
+        if (storagePrefix.test(raw)) {
+            url = `${SUPABASE_URL}/storage/v1/object/public/profile-pictures/${encodeURI(raw.replace(storagePrefix, ''))}`;
+        } else {
+            const path = raw.replace(/^profile-pictures\//i, '');
+            url = path.startsWith('profiles/')
+                ? supabase?.storage?.from('profile-pictures').getPublicUrl(path)?.data?.publicUrl || ''
+                : '';
+        }
+    }
+    if (url) {
+        return `<img class="post-avatar post-avatar-img" src="${escapeHtml(url)}" alt="" width="45" height="45" loading="lazy" referrerpolicy="no-referrer">`;
     }
     return `<div class="post-avatar post-avatar-fallback">${initials}</div>`;
 }
@@ -1823,6 +1835,9 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
     const modal = document.getElementById('fullPostModal');
     const contentEl = document.getElementById('fullPostContent');
     const sourcePost = allPosts.find((post) => post.id === postId);
+    const displayName = authorName || sourcePost?.user?.full_name || sourcePost?.user?.username || 'Anonymous';
+    const initials = displayName.split(' ').map((name) => name[0]).join('').toUpperCase().slice(0, 2) || 'GC';
+    const authorAvatarHtml = buildPostAvatarHtml(sourcePost?.user, initials);
     const authorIsExpert = !!sourcePost?.user?.is_expert || (sourcePost?.user_id === currentUser?.id && currentUserIsExpert);
     const expertAuthorBadge = authorIsExpert && typeof getExpertUserBadgeSvg === 'function' ? getExpertUserBadgeSvg(`full-${postId}`, 20) : '';
     const expertApprovedBadge = sourcePost && (sourcePost.expert_endorsed_at || sourcePost.is_expert_approved) && typeof getPostExpertApprovedBadgeHtml === 'function'
@@ -1839,15 +1854,10 @@ function openFullPostModal(postId, title, body, authorName, authorCourse, create
     contentEl.innerHTML = `
         <div class="full-post-header">
             <div class="post-author-info">
-                <div class="post-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </div>
+                ${authorAvatarHtml}
                 <div class="post-meta">
                     <div class="post-author">
-                    <strong>${escapeHtml(authorName || 'Anonymous')}</strong>${expertAuthorBadge}
+                    <strong>${escapeHtml(displayName)}</strong>${expertAuthorBadge}
                         ${authorCourse ? `<span class="post-course">• ${escapeHtml(authorCourse)}</span>` : ''}
                     </div>
                     <div class="post-date">${formatDate(createdAt)}</div>

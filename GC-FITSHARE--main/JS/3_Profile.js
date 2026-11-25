@@ -93,6 +93,22 @@ function mergeLoadedPostUser(post, postUser) {
     }
 }
 
+function resolveProfileAvatarUrl(avatarUrl) {
+    const raw = avatarUrl ? String(avatarUrl).trim() : '';
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+
+    const storagePrefix = /^\/?storage\/v1\/object\/public\/profile-pictures\//i;
+    if (storagePrefix.test(raw)) {
+        return `${SUPABASE_URL}/storage/v1/object/public/profile-pictures/${encodeURI(raw.replace(storagePrefix, ''))}`;
+    }
+
+    const path = raw.replace(/^profile-pictures\//i, '');
+    if (!path.startsWith('profiles/')) return '';
+    const { data } = supabase?.storage?.from('profile-pictures').getPublicUrl(path) || {};
+    return data?.publicUrl || '';
+}
+
 /** Category preferences: canonical column is content_interests; older rows may still have interested_categories. */
 function wellnessInterestList(wp) {
     if (!wp) return [];
@@ -605,8 +621,8 @@ function setProfilePictureFromUser() {
     const nameSrc = userProfile.full_name || userProfile.username || 'GC';
     const ini = nameSrc.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'GC';
     picInitials.textContent = ini;
-    const url = userProfile.avatar_url ? String(userProfile.avatar_url).trim() : '';
-    if (url && /^https?:\/\//i.test(url)) {
+    const url = resolveProfileAvatarUrl(userProfile.avatar_url);
+    if (url) {
         picImg.src = url;
         picImg.classList.remove('hidden');
         picInitials.classList.add('hidden');
@@ -1274,9 +1290,9 @@ async function submitProfileComment(postId, commentsContainer = null) {
 
 // ─── Post Card (matches Main Feed markup / SVGs) ─────────────────────────────
 function buildPostAvatarHtml(user, initials) {
-    const raw = user?.avatar_url ? String(user.avatar_url).trim() : '';
-    if (raw && /^https?:\/\//i.test(raw)) {
-        return `<img class="post-avatar post-avatar-img" src="${escapeHtml(raw)}" alt="" width="45" height="45" loading="lazy" referrerpolicy="no-referrer">`;
+    const url = resolveProfileAvatarUrl(user?.avatar_url);
+    if (url) {
+        return `<img class="post-avatar post-avatar-img" src="${escapeHtml(url)}" alt="" width="45" height="45" loading="lazy" referrerpolicy="no-referrer">`;
     }
     return `<div class="post-avatar">${escapeHtml(initials)}</div>`;
 }
